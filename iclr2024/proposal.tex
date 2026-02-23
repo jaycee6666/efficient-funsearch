@@ -1,0 +1,66 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2024_conference,times}
+\input{math_commands.tex}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath}
+
+\title{Sample-efficient FunSearch: Accelerating Heuristic Discovery via Duplicate Program Detection}
+
+\author{[Team Member 1] \& [Team Member 2] \\
+Department of [Department], [University] \\
+\texttt{\{email1, email2\}@[university].edu} \\
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+FunSearch (Romera-Paredes et al., Nature 2023) leverages Large Language Models (LLMs) to automatically discover heuristic functions through evolutionary program search. However, FunSearch lacks mechanisms to detect functionally duplicate programs during search, leading to wasted LLM API calls, redundant evaluations, and slower convergence. We propose \textbf{Sample-efficient FunSearch}, an enhanced version with fast duplicate program detection.
+
+\section{Proposed Method}
+
+We introduce a pre-evaluation filtering pipeline with three components:
+
+\textbf{Code Normalization}: Transform programs into canonical forms by standardizing variable names, removing comments, and normalizing whitespace.
+
+\textbf{Hybrid Similarity Detection}: Two-stage approach: (1) Fast pre-filtering using code embeddings (CodeBERT) with cosine similarity; (2) Precise verification using Abstract Syntax Tree (AST) comparison.
+
+\textbf{Program Archive}: Hash-based archive enabling $O(1)$ lookup for duplicate detection. The enhanced loop skips evaluation for programs matching archived signatures.
+
+\section{Evaluation Plan}
+
+\textbf{Dataset}: OR-Library and Weibull datasets for online bin packing.
+
+\textbf{Metrics}: (1) LLM queries to reach target performance; (2) Time saved from filtering; (3) Convergence speed; (4) Final heuristic quality (bins used).
+
+\textbf{Baselines}: (1) Original FunSearch; (2) Exact string match; (3) Our hybrid approach.
+
+\section{Expected Contributions}
+
+\begin{enumerate}\itemsep0pt
+    \item Novel enhancement reducing redundant evaluations via efficient duplicate detection.
+    \item Empirical evaluation demonstrating resource savings with maintained quality.
+    \item Open-source implementation for reproducibility.
+\end{enumerate}
+
+\section{Timeline}
+
+\vspace{-0.5em}
+\begin{table}[h]
+\centering\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Dates} & \textbf{Tasks} \\
+\midrule
+Feb 24--Mar 10 & Literature review, codebase understanding \\
+Mar 11--Mar 24 & Implement normalization \& similarity detection \\
+Mar 25--Mar 31 & Milestone: Integration, preliminary results \\
+Apr 1--Apr 26 & Full experiments, final report \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
