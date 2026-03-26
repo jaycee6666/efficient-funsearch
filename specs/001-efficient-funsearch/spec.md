@@ -1,225 +1,119 @@
-# Feature Specification: Efficient FunSearch
+# Feature Specification: Behavioral Deduplication and Diversity-Guided Selection for Sample-Efficient FunSearch
 
 **Feature Branch**: `001-efficient-funsearch`  
 **Created**: 2026-02-23  
+**Updated**: 2026-03-26  
 **Status**: Draft  
-**Input**: User description: "根据前面的讨论和Course_Project_Instruction.pdf，生成该项目的规范文档"
-
----
-
-## Course Project Overview
-
-### Project Logistics
-
-| Item | Requirement |
-|------|-------------|
-| **Team Size** | Recommended 3 students, groups of 1-2 also allowed |
-| **Project Weight** | 30% of course grade |
-| **Grading** | All team members share the same grade |
-
-### Submission Milestones
-
-| Milestone | Weight | Due Date | Deliverables |
-|-----------|--------|----------|--------------|
-| **Project Proposal** | 20% (6% total) | Feb 24, 2026, 11:59 PM HKT | 1-page ICLR '24 style document |
-| **Project Milestone** | 10% (3% total) | Mar 31, 2026, 11:59 PM HKT | Code + Report draft + Preliminary results |
-| **Final Project** | 70% (21% total) | Apr 26, 2026, 11:59 PM HKT | Report (4-6 pages) + Google Colab |
-
-### Final Project Grading Breakdown
-
-| Component | Points | Criteria |
-|-----------|--------|----------|
-| **Final Report** | 50 points | |
-| - Motivation & Problem Explanation | 10 points | Clear problem description and motivation |
-| - Method Appropriateness & Explanation | 15 points | Appropriate approach with clear design |
-| - Insights & Results | 15 points | Meaningful experimental results and analysis |
-| - Presentation | 10 points | Writing quality, figures, organization |
-| **Google Colab Code** | 20 points | |
-| - Code Correctness & Design | 15 points | Working, well-designed implementation |
-| - Documentation | 5 points | Class/function descriptions, comments |
-
-### Code Submission Requirements (Google Colab)
-
-**Platform**: Google Colab (mandatory)
-
-**Requirements**:
-1. **High-level Summary**: Description of code purpose and task
-2. **Complete Code**: All code to reproduce results including:
-   - Data preprocessing
-   - Model/algorithm definition
-   - Training/evaluation pipeline
-3. **Detailed Comments**: Each cell must have clear documentation
-4. **Self-contained**: Must be runnable as-is without external dependencies
-5. **Reference Example**: See [PyTorch Geometric Colabs](https://pytorch-geometric.readthedocs.io/en/latest/notes/colabs.html) for good examples
-
-### Compute Resources
-
-| Resource | Allocation |
-|----------|------------|
-| **ChatGPT API Credits** | ~20,000 queries to GPT-3.5 (per team, 500 tokens input/output assumed) |
-| **Google Cloud Credits** | $300 for new customers (usable in Colab for TPUv3, A100, etc.) |
-| **Extra Resources** | Available for top-ranked teams pursuing publication |
-
-### Report Format Requirements
-
-- **Style**: ICLR '24 style file ([download](https://github.com/ICLR/MasterTemplate/raw/master/iclr2024.zip))
-- **Page Limit**: 4-6 pages (excluding references)
-- **No abstract required for proposal**
-
----
+**Input**: proposal updated from `proposal_v0.tex` to `proposal_v1.tex`
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Run FunSearch with Duplicate Detection (Priority: P1)
+### User Story 1 - 去除行为重复候选 (Priority: P1)
 
-As a researcher using FunSearch for combinatorial optimization problems, I want the system to automatically detect and filter out functionally duplicate programs before evaluation, so that I can reduce wasted LLM API calls and evaluation time.
+作为项目成员，我希望在完整评估前识别并剔除行为上等价的候选程序，以减少冗余评估与无效 API 调用。
 
-**Why this priority**: This is the core functionality - without duplicate detection, the entire project has no value. The primary goal is to improve sample efficiency.
+**Why this priority**: 这是提升样本效率的首要能力，直接决定资源消耗与迭代速度。
 
-**Independent Test**: Can be fully tested by running FunSearch with and without the duplicate detection module and comparing the number of unique programs evaluated.
+**Independent Test**: 固定迭代次数下，对比“无去重”和“行为去重”流程，验证被完整评估的重复候选显著减少。
 
 **Acceptance Scenarios**:
 
-1. **Given** FunSearch generates 10 new candidate programs, **When** the duplicate detection module processes them, **Then** it should identify and filter out programs that are functionally identical to previously evaluated ones.
-2. **Given** A program with different variable names but identical logic, **When** processed by normalization, **Then** it should be detected as a duplicate.
-3. **Given** A program archive with 1000 unique programs, **When** checking a new candidate, **Then** the lookup should complete in under 1 second.
+1. **Given** 生成了一批新候选程序，**When** 执行行为探测，**Then** 行为指纹高度相似的候选会在完整评估前被剔除。
+2. **Given** 候选仅在变量命名或表面形式不同，**When** 进行标准化和行为对比，**Then** 它们会被识别为重复行为候选。
 
 ---
 
-### User Story 2 - Evaluate Sample Efficiency Improvements (Priority: P2)
+### User Story 2 - 维持探索多样性 (Priority: P2)
 
-As a student completing the course project, I want to measure how much the duplicate detection improves FunSearch's efficiency, so that I can demonstrate the effectiveness of the enhancement in the final report.
+作为项目成员，我希望候选选择同时考虑性能与多样性，避免搜索过早陷入单一策略。
 
-**Why this priority**: The course requires empirical evaluation demonstrating the improvement. Without measurable results, the project cannot be completed.
+**Why this priority**: 仅做去重会降低冗余，但不能保证持续探索新策略；多样性引导用于补足这一点。
 
-**Independent Test**: Can be fully tested by running experiments with and without the enhancement and comparing LLM query counts to reach target performance.
+**Independent Test**: 在相同预算下，对比“仅性能选择”和“性能+多样性选择”，验证后者保留更多差异化候选策略。
 
 **Acceptance Scenarios**:
 
-1. **Given** A fixed iteration budget (e.g., 100 iterations), **When** running original FunSearch vs enhanced FunSearch, **Then** the enhanced version should use at least 20% fewer LLM queries to reach similar performance.
-2. **Given** The same random seed, **When** comparing convergence speed, **Then** the enhanced version should reach 90% of best-known solution in fewer iterations.
+1. **Given** 两个候选性能接近，**When** 执行选择，**Then** 多样性更高的候选可获得更高综合优先级。
+2. **Given** 搜索进入中后期，**When** 应用多样性引导，**Then** 候选策略不会快速塌缩到单一路径。
 
 ---
 
-### User Story 3 - Maintain Solution Quality (Priority: P3)
+### User Story 3 - 用统一口径完成评估与消融 (Priority: P3)
 
-As a researcher, I want to ensure that the duplicate detection does not filter out potentially valuable programs, so that the final solutions remain high quality.
+作为项目成员，我希望评估指标与基线/消融设计和 proposal_v1 一致，以便结果可直接用于里程碑和最终报告。
 
-**Why this priority**: Over-aggressive filtering could remove novel programs that just happen to look similar but have different behavior. Must balance efficiency with quality.
+**Why this priority**: 评估口径不一致会导致结论不可比，影响项目交付可信度。
 
-**Independent Test**: Can be tested by comparing final solution quality (bin count for bin packing) between original and enhanced FunSearch.
-
-**Acceptance Scenarios**:
-
-1. **Given** A program that is semantically different but syntactically similar, **When** processed by the hybrid detection, **Then** it should NOT be filtered out as a duplicate.
-2. **Given** Running FunSearch to completion, **When** comparing final bin count, **Then** the enhanced version should achieve within 5% of the original's solution quality.
-
----
-
-### User Story 4 - Prepare Deliverables for Course Submission (Priority: P2)
-
-As a student, I need to prepare all required deliverables in the correct format for each milestone, so that my team can receive full credit for the project.
-
-**Why this priority**: Without proper deliverables, the project cannot be graded regardless of technical quality.
-
-**Independent Test**: Can be tested by verifying each deliverable matches the submission requirements.
+**Independent Test**: 根据 spec 生成实验清单，检查指标与基线项是否完整覆盖 proposal_v1 要求。
 
 **Acceptance Scenarios**:
 
-1. **Given** The proposal deadline, **When** submitting, **Then** the document must be in ICLR '24 style, one page, without abstract and references.
-2. **Given** The milestone deadline, **When** submitting, **Then** code must run on evaluation dataset and report draft must include problem description, method design, and preliminary results.
-3. **Given** The final deadline, **When** submitting, **Then** the report must be 4-6 pages (ICLR '24 style) and Google Colab must be self-contained and runnable.
+1. **Given** 需要制定实验计划，**When** 参考 spec，**Then** 指标包含样本效率、重复检测率、收敛速度与最终装箱质量。
+2. **Given** 需要设计消融，**When** 参考 spec，**Then** 基线集合完整覆盖 proposal_v1 定义的四组配置。
 
 ---
 
 ### Edge Cases
 
-- What happens when the code contains syntax errors and cannot be parsed?
-- How does the system handle empty or trivial programs (e.g., just "return 0")?
-- What happens when the program archive reaches memory limits?
-- How are newly generated programs that are slightly modified versions of existing ones handled?
-- What happens when LLM generates completely invalid code?
-- What happens if ChatGPT API quota is exhausted before experiments complete?
-
----
+- 行为探测样本较少时，需避免误删潜在高质量但边界行为不同的候选。
+- 搜索早期候选数量不足时，多样性引导不应过度削弱基本性能导向。
+- 候选大量相似时，流程必须保持“先去重后完整评估”的顺序一致性。
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST accept a Python program as input and output a normalized canonical representation
-- **FR-002**: System MUST compute similarity scores between normalized programs using a two-stage hybrid approach
-- **FR-003**: System MUST maintain a program archive that stores all previously evaluated programs with their normalized forms
-- **FR-004**: System MUST filter out programs that exceed a similarity threshold (0.95) before evaluation
-- **FR-005**: System MUST integrate with FunSearch's iteration loop as a pre-evaluation filter
-- **FR-006**: System MUST log all duplicate detection decisions for debugging and analysis
-- **FR-007**: System MUST handle edge cases including syntax errors, empty programs, and invalid code gracefully
-- **FR-008**: System MUST provide metrics on duplicate detection rate and resource savings
+- **FR-001**: 系统 MUST 采用“行为去重 + 多样性引导选择”的双机制作为主线框架。
+- **FR-002**: 系统 MUST 在完整评估前执行行为去重流程，减少冗余候选进入高成本评估。
+- **FR-003**: 系统 MUST 将样本效率定义为 `η = N_unique / N_total` 并按该口径统计实验结果。
+- **FR-004**: 系统 MUST 使用 5–15 个覆盖边界情况的探测实例构建候选行为指纹。
+- **FR-005**: 系统 MUST 将行为指纹高相似候选（阈值 > 0.95）判定为重复并过滤。
+- **FR-006**: 系统 MUST 在候选选择时同时考虑性能与多样性贡献，并支持既定的多样性权重设置。
+- **FR-007**: 系统 MUST 采用 proposal_v1 的评估指标集合：样本效率相关 API 调用、重复检测率、收敛速度、最终装箱质量。
+- **FR-008**: 系统 MUST 采用 proposal_v1 的基线/消融集合：原始方法、精确字符串匹配、标准化+仅哈希去重、双机制组合。
+- **FR-009**: 规范 MUST 移除 v0 中“混合相似度（嵌入+AST）作为主线”的描述，避免与 v1 冲突。
+- **FR-010**: 文档 MUST 保持技术无关表述，聚焦需求与验收结果，不绑定具体实现技术栈。
 
-### Course Deliverable Requirements
+### Functional Requirement Acceptance Criteria
 
-- **CD-001**: Proposal MUST be submitted by Feb 24, 2026 in ICLR '24 style format (1 page, no abstract, no references)
-- **CD-002**: Proposal MUST include: topic selection, motivation, tentative plan, evaluation approach, comparison baseline
-- **CD-003**: Milestone MUST be submitted by Mar 31, 2026 with working code and report draft
-- **CD-004**: Milestone code MUST run on chosen dataset/benchmark and produce preliminary results
-- **CD-005**: Final report MUST be submitted by Apr 26, 2026 in ICLR '24 style format (4-6 pages, excluding references)
-- **CD-006**: Final report MUST include: motivation & problem (10 pts), method explanation (15 pts), insights & results (15 pts), presentation quality (10 pts)
-- **CD-007**: Final code MUST be submitted via Google Colab with high-level summary, complete runnable code, and detailed cell comments
-- **CD-008**: Google Colab MUST be self-contained and runnable as-is without external setup
+- **AC-001 (FR-001/FR-002)**: 评审可从规范中明确识别双机制主线，且流程顺序为“行为去重 → 完整评估”。
+- **AC-002 (FR-003/FR-007)**: 评估章节明确列出 η 定义与四项指标，无缺失项。
+- **AC-003 (FR-004/FR-005)**: 规范中明确行为探测规模（5–15）与重复判定阈值（>0.95）。
+- **AC-004 (FR-006/FR-008)**: 规范中明确性能+多样性联合选择原则与四组基线/消融配置。
+- **AC-005 (FR-009/FR-010)**: 规范不再包含 v0 主线冲突描述，且无语言/框架/API 级实现细节。
 
 ### Key Entities
 
-- **Program**: A Python function that implements a heuristic for the bin packing problem
-- **Normalized Program**: A canonical representation of a program after AST parsing and variable standardization
-- **Program Archive**: Storage containing all previously evaluated programs with their normalized forms and scores
-- **Similarity Score**: A numerical value (0-1) indicating how similar two programs are
-
----
+- **Candidate Program**: 由搜索过程生成、待评估的启发式候选程序。
+- **Behavioral Fingerprint**: 候选在探测实例上的决策行为摘要，用于判定行为相似性。
+- **Sample Efficiency Record**: 每轮搜索中的 `N_unique`、`N_total` 及其比值记录。
+- **Ablation Configuration**: 用于对比实验的配置分组定义。
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Enhanced FunSearch uses at least 20% fewer LLM queries than original FunSearch to achieve comparable performance (measured by bin count)
-- **SC-002**: Duplicate detection module processes each candidate program in under 1 second (including archive lookup)
-- **SC-003**: Final solution quality of enhanced FunSearch is within 5% of original FunSearch's performance
-- **SC-004**: System correctly identifies at least 90% of syntactically different but functionally identical program pairs
-- **SC-005**: The project produces a working implementation with documented experimental results suitable for the course report
-
-### Course Deliverable Success Criteria
-
-- **SC-006**: Proposal submitted on time meeting all format requirements
-- **SC-007**: Milestone code produces preliminary results on benchmark dataset
-- **SC-008**: Final report achieves at least 40/50 points on report rubric
-- **SC-009**: Google Colab achieves at least 15/20 points on code rubric
-- **SC-010**: ChatGPT API usage stays within provided quota (~20,000 queries)
-
----
+- **SC-001**: 团队可基于 spec 在一次评审中准确复述 v1 双机制目标，准确率达到 100%。
+- **SC-002**: 按 spec 生成的实验计划 100% 包含 v1 定义的四项评估指标。
+- **SC-003**: 按 spec 生成的对比计划 100% 包含 v1 定义的四组基线/消融配置。
+- **SC-004**: 更新后 spec 中与 v1 冲突的 v0 主线描述项为 0。
 
 ## Assumptions
 
-- FunSearch will be based on the RayZhhh/funsearch community implementation (as agreed in brainstorming)
-- The problem domain is Online Bin Packing as specified in the course project
-- LLM API access will be available via course-provided credits (~20,000 GPT-3.5 queries)
-- Code similarity detection will use a hybrid approach: embedding-based pre-filtering + AST verification
-- Development will occur on Google Colab for final submission
-- Team size is 2 members (as indicated in existing design document)
+- 项目问题域保持为在线装箱任务。
+- 课程交付节奏保持 proposal_v1 时间线定义不变。
+- 评估对比使用统一数据与口径，保证结果可比。
 
----
+## Dependencies
+
+- `iclr2024/proposal_v1.tex`（唯一需求来源）
 
 ## Constraints
 
-- **Time Constraints**: Must meet three hard deadlines (Feb 24, Mar 31, Apr 26, 2026)
-- **Resource Constraints**: ChatGPT API limited to ~20,000 queries (may need optimization)
-- **Format Constraints**: ICLR '24 style file mandatory for all written submissions
-- **Platform Constraints**: Final code must run on Google Colab without external dependencies
-- **Page Constraints**: Final report limited to 4-6 pages (excluding references)
-
----
+- 本次仅更新 spec 与 requirements，不扩展到额外研究目标。
+- 文档要求可测试、可审阅、且不泄露实现细节。
 
 ## Out of Scope
 
-- Publication submission (though top teams will be invited)
-- GPU-intensive model training (embedding model can use pre-computed embeddings)
-- Real-time production deployment
-- Support for programming languages other than Python
+- 不新增 proposal_v1 未定义的新算法模块。
+- 不在本文档中展开实现代码和工程结构细节。
