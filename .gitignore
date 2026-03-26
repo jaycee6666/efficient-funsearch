@@ -57,6 +57,7 @@ logs/
 .mypy_cache/
 .ropeproject/
 .coverage*
+PUSH_TO_GITHUB.sh
 
 # OS
 .DS_Store
