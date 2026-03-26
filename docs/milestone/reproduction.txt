@@ -1,0 +1,91 @@
+CS5491 Milestone Reproduction Guide
+
+1) Environment
+- OS: Windows (tested locally)
+- Python: 3.9+
+- Package manager: pip
+
+2) Clone and setup
+
+```bash
+git clone https://github.com/jaycee6666/efficient-funsearch.git
+cd efficient-funsearch
+
+# optional virtualenv
+python -m venv .venv
+# Windows PowerShell:
+# .venv\Scripts\Activate.ps1
+
+pip install -e .
+pip install -e .[dev]
+```
+
+3) Reproduce milestone verification
+
+```bash
+ruff check .
+pytest -q -rs
+```
+
+3.1) Reproduce quick preliminary milestone numbers (smoke run)
+
+```bash
+python - <<'PY'
+import json
+from src.integration.funsearch_adapter import FunSearchAdapter, FunSearchConfig
+
+def eval_fn(code: str) -> float:
+    return float(len(code))
+
+initial_programs = [
+    "def solve(x): return x + 1",
+    "def solve(y): return y + 1",
+    "def solve(x): return x + 1",
+    "def solve(x): return x * 2",
+]
+
+def run(setting: str, use_dedup: bool):
+    cfg = FunSearchConfig(max_generations=1, verbose=False, use_duplicate_detection=use_dedup)
+    adapter = FunSearchAdapter(cfg)
+    result = adapter.run(initial_programs=initial_programs, evaluation_function=eval_fn)
+    return {
+        "setting": setting,
+        "N_total": result.total_programs_generated,
+        "N_unique": result.unique_programs_evaluated,
+        "sample_efficiency": result.efficiency_metrics.sample_efficiency,
+        "duplicate_rate": result.efficiency_metrics.duplicate_detection_rate,
+        "convergence_proxy": "1-generation smoke run",
+        "final_quality_proxy": result.best_score,
+    }
+
+rows = [
+    run("original", use_dedup=False),
+    run("behavioral_plus_diversity", use_dedup=True),
+]
+print(json.dumps(rows, ensure_ascii=False, indent=2))
+PY
+```
+
+4) Expected output summary
+- `ruff check .` should report: `All checks passed!`
+- `pytest -q -rs` should pass all tests.
+  Current verified snapshot in this repository:
+  - 65 passed
+  - 0 skipped
+- Quick preliminary run should print two JSON rows (`original`, `behavioral_plus_diversity`) with fields:
+  - `N_total`, `N_unique`, `sample_efficiency`, `duplicate_rate`, `convergence_proxy`, `final_quality_proxy`
+
+5) Scope of reproducibility
+- Includes behavioral deduplication path tests
+- Includes diversity-guided selection tests
+- Includes metrics and ablation-config interface tests
+- Includes docs alignment tests for v1 flow
+
+6) Key files (for quick inspection)
+- src/similarity/behavioral_probe.py
+- src/similarity/diversity.py
+- src/integration/funsearch_adapter.py
+- src/integration/ablation_configs.py
+- src/metrics/models.py
+- tests/integration/test_funsearch_adapter.py
+- tests/integration/test_ablation_configs.py

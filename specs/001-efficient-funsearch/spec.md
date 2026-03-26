@@ -89,6 +89,18 @@
 - **Sample Efficiency Record**: 每轮搜索中的 `N_unique`、`N_total` 及其比值记录。
 - **Ablation Configuration**: 用于对比实验的配置分组定义。
 
+### Milestone Submission Requirements
+
+- **Deadline**: 2026-03-31 23:59 HKT
+- **Deliverables**:
+  - **Code**: 包含核心实现代码与可运行的命令/脚本（至少能复现初步结果）。
+  - **Evaluation**: 针对选定数据集/基准的初步评估结果（表格或摘要），需明确指标定义（如 η、重复率等）。
+  - **Programs**: 任何必要的辅助程序（如数据预处理、评估脚本）。
+  - **Report Draft**: 包含问题描述与动机、方法设计、初步结果。
+- **Packaging** (Recommended):
+  - 提交目录结构建议：`milestone_submission/`
+  - 包含文件：`report_draft.pdf`, `preliminary_results.md`, `code_link.txt`, `reproduction.txt`。
+
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes

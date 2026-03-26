@@ -1,0 +1,15 @@
+GitHub Repository (main branch)
+https://github.com/jaycee6666/efficient-funsearch
+
+Feature Branch (proposal/spec implementation history)
+https://github.com/jaycee6666/efficient-funsearch/tree/001-update-proposal-spec
+
+Milestone Materials Directory
+https://github.com/jaycee6666/efficient-funsearch/tree/main/docs/milestone
+
+Optional Notebook Links
+https://github.com/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_colab.ipynb
+https://github.com/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_demo.ipynb
+
+Note:
+- If course submission requires a single canonical link, use the main repository URL above.
