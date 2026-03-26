@@ -106,9 +106,22 @@
 
 ---
 
-## Phase 6: Polish & Cross-Cutting Concerns
+## Phase 6: Mid-term Milestone Submission
 
-**Purpose**: 整体验证、文档一致性、发布前收口。
+**Purpose**: 准备并打包符合课程要求的里程碑交付材料（中期）。
+
+- [x] T036 Verify reproducibility with ruff check and pytest in repository root
+- [x] T037 Populate team info and benchmark details in docs/milestone/milestone_report_draft.md
+- [x] T038 Fill preliminary results from experiment logs in docs/milestone/preliminary_results.md
+- [x] T039 Create submission package (report, results, link, reproduction.txt) in docs/milestone/
+
+**Checkpoint**: `docs/milestone/` 目录包含所有必需文件，且复现脚本验证通过。
+
+---
+
+## Phase 7: Post-Milestone Polish & Final Delivery
+
+**Purpose**: 整体验证、文档一致性、发布前收口（最终项目交付）。
 
 - [ ] T031 [P] Run full unit suite for feature modules in tests/unit/
 - [ ] T032 [P] Run full integration suite for feature flows in tests/integration/
@@ -127,7 +140,8 @@
 - **Phase 3 (US1)**: 依赖 Phase 2，MVP 主线
 - **Phase 4 (US2)**: 依赖 US1 的过滤与适配器能力
 - **Phase 5 (US3)**: 依赖 US1+US2 的实现结果用于统一评估
-- **Phase 6 (Polish)**: 依赖目标用户故事完成
+- **Phase 6 (Mid-term Milestone)**: 依赖 Phase 5 (US3)，确保 MVP 质量与初步结果
+- **Phase 7 (Post-Milestone Polish)**: 依赖 Milestone 提交后的最终收口
 
 ### User Story Dependencies
 
@@ -190,6 +204,8 @@ T029 specs/001-efficient-funsearch/data-model.md
 1. US1 交付行为去重主路径
 2. US2 增量交付多样性选择
 3. US3 完成交付口径统一（指标+消融）
+4. Mid-term Milestone Submission 交付课程要求的中期材料
+5. Post-Milestone Polish 交付最终项目
 
 ### Suggested MVP Scope
 

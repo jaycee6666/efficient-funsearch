@@ -1,4 +1,4 @@
-# Efficient FunSearch (CS5491 Project)
+# Efficient FunSearch
 
 Sample-efficient FunSearch implementation with **behavioral deduplication** and **diversity-guided selection** for online bin packing search.
 
@@ -97,9 +97,11 @@ pytest -q -rs
 
 Prepared docs are available in:
 
-- `docs/milestone/milestone_report_draft.md` (CN/EN draft)
-- `docs/milestone/preliminary_results.md`
-- `docs/milestone/MILESTONE_SUBMISSION_CHECKLIST.md`
+- `docs/milestone/milestone_report_draft_en.md` (English submission draft)
+- `docs/milestone/milestone_report_draft_zh.md` (Chinese reading version)
+- `docs/milestone/code_link.txt`
+- `docs/milestone/reproduction.txt`
+- `docs/milestone/README_submit.md`
 
 ## Development Notes
 

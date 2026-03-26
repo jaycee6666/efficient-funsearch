@@ -20,12 +20,14 @@
 - Plan Task 6 → `T022` + `T025` + `T027`
 - Plan Task 7 → `T023` + `T026`
 - Plan Task 8 → `T024` + `T028` + `T029` + `T030`
+- Plan Task 9 → `T036` + `T037` + `T038` + `T039`
 
 Phase/执行收口项：
 
 - Setup: `T001~T003`
 - Foundational补充: `T007`
-- Polish & Cross-Cutting: `T031~T035`
+- Mid-term Milestone Submission: `T036~T039`
+- Post-Milestone Polish: `T031~T035`
 
 ---
 
@@ -418,6 +420,46 @@ git commit -m "docs: align contracts and tasks with v1 behavioral+density plan"
 
 ---
 
+### Task 9: Mid-term Milestone Submission
+
+**Files:**
+- Modify: `docs/milestone/milestone_report_draft.md`
+- Modify: `docs/milestone/preliminary_results.md`
+- Create: `reproduction.txt`
+- Artifact: `milestone_submission/` (Directory)
+
+**Note:** This is a mid-term checkpoint. Final polishing and extensive testing continue in Phase 8.
+
+**Step 1: Verify Reproducibility**
+
+Run: `ruff check . && pytest -q -rs`
+Expected: Pass
+
+**Step 2: Populate Report & Results**
+
+- Fill team info and benchmark details in `milestone_report_draft.md`.
+- Extract latest metrics (eta, duplicate rate) from `logs/efficiency.json` (or latest run).
+- Fill `preliminary_results.md`.
+
+**Step 3: Create Submission Package**
+
+```bash
+mkdir -p milestone_submission
+cp docs/milestone/milestone_report_draft.md milestone_submission/report_draft.md
+cp docs/milestone/preliminary_results.md milestone_submission/preliminary_results.md
+cp docs/milestone/code_link.txt milestone_submission/code_link.txt
+# Generate reproduction.txt
+echo "Python 3.10+" > milestone_submission/reproduction.txt
+echo "pip install -e ." >> milestone_submission/reproduction.txt
+echo "pytest -q -rs" >> milestone_submission/reproduction.txt
+```
+
+**Step 4: Final Verification**
+
+Check `milestone_submission/` contains all 4 required files.
+
+---
+
 ## Verification Checklist (must pass before merge)
 
 1. `pytest tests/unit -v` 全通过
@@ -426,6 +468,7 @@ git commit -m "docs: align contracts and tasks with v1 behavioral+density plan"
 4. `ruff check .` 通过
 5. `python -m pytest tests/integration/test_ablation_configs.py -v` 覆盖四组基线
 6. 指标输出包含：`sample_efficiency`、`duplicate_detection_rate`、`convergence`、`final_quality`
+7. `milestone_submission/` 包含 report_draft.md, preliminary_results.md, code_link.txt, reproduction.txt
 
 ---
 
@@ -437,6 +480,7 @@ git commit -m "docs: align contracts and tasks with v1 behavioral+density plan"
 - **FR-006** → Task 5
 - **FR-007/FR-008** → Task 6 + Task 7
 - **FR-009/FR-010** → Task 8
+- **Milestone Requirements** → Task 9
 - **AC-001..AC-005** → Task 3/4/6/7/8 的测试与文档一致性检查
 - **SC-002..SC-004** → Task 6 + Task 7 + Verification Checklist
 
@@ -464,7 +508,8 @@ git commit -m "docs: align contracts and tasks with v1 behavioral+density plan"
 - `pytest tests/integration/test_ablation_configs.py::test_v1_ablation_configs_have_four_required_variants -v`
 - `pytest tests/integration/test_doc_alignment.py::test_documentation_mentions_behavioral_and_diversity_mainline -v`
 
-Phase 6 收口（T031~T034）在最终交付前统一执行完整 unit / integration / full-suite 与 lint。
+Phase 6 (Milestone) 仅需验证核心复现脚本通过。
+Phase 7 收口（T031~T034）在最终交付前统一执行完整 unit / integration / full-suite 与 lint。
 
 风险收敛补充（后续执行约束）：
 
