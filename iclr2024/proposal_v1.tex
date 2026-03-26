@@ -1,0 +1,59 @@
+\documentclass{article}
+\usepackage{iclr2024_conference,times}
+\input{math_commands.tex}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath}
+
+\title{Behavioral Deduplication and Diversity-Guided Selection\\for Sample-Efficient FunSearch}
+
+\author{CHEN Sijie (59872908) \& BIAN Wenbo (59872472) \\
+Department of Computer Science, City University of Hong Kong \\
+\texttt{sijiechan2-c@my.cityu.edu.hk, wbian9-c@my.cityu.edu.hk}}
+
+\iclrfinalcopy
+\begin{document}
+\maketitle
+\small
+
+\section{Introduction}
+FunSearch (Romera-Paredes et al., Nature 2024) discovers heuristics via LLM evolutionary program search. As iterations increase, functionally equivalent programs become common, yet syntactic matching fails to detect them. We propose two enhancements for online bin packing: \textbf{(1) Behavioral Deduplication} that removes redundant programs before full evaluation, and \textbf{(2) Diversity-Guided Selection} (inspired by Novelty Search) that actively promotes novel heuristic strategies. Together they form a defend-and-explore framework.
+
+\section{Proposed Method}
+We define sample efficiency as $\eta = N_{\text{unique}}/N_{\text{total}}$, where $N_{\text{unique}}$ is the number of behaviorally distinct programs actually evaluated. The enhanced pipeline first normalizes code, runs behavioral probing to detect duplicates, then applies diversity-guided selection.
+
+\textbf{A. Behavioral Deduplication.}~~Candidates are normalized then tested on 5--15 probing instances covering edge cases. Decision sequences form behavioral fingerprints; similar ones (hash or cosine similarity $>0.95$) are discarded before full evaluation.
+
+\textbf{B. Diversity-Guided Selection.}~~Selection score is $\mathrm{Score}(p)=\overline{\mathrm{Perf}}(p)+\beta\cdot\mathrm{Div}(p)$ ($\beta=0.2$), where $\mathrm{Div}(p)$ is mean cosine distance to archived fingerprints. We explore adaptive $\beta$ scheduling.
+
+\section{Evaluation Plan}
+\textbf{Dataset:} OR-Library and Weibull bin-packing instances.
+
+\textbf{Metrics:} (1) LLM API calls to reach target performance (sample efficiency), (2) duplicate detection rate, (3) convergence speed, (4) final number of bins used.
+
+\textbf{Baselines \& Ablation:} (1) Original FunSearch, (2) + exact string matching, (3) + normalization + hash-only deduplication, (4) \textbf{Ours} (behavioral deduplication + diversity-guided selection).
+
+\section{Expected Contributions}
+\begin{enumerate}\itemsep0pt
+\item Behavioral duplicate detection addressing functionality-level similarity in LLM program search.
+\item Lightweight diversity-guided selection promoting novel heuristic strategies.
+\item Systematic ablation study quantifying efficiency gains on standard bin-packing benchmarks.
+\end{enumerate}
+
+\section{Timeline}
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Dates & Tasks \\
+\midrule
+Feb28--Mar10 & Literature \& codebase \\
+Mar11--24 & Implement A \& B \\
+Mar25--31 & \textbf{Milestone}: integration + prelim \\
+Apr1--26 & Experiments, ablation, report \& Colab \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
