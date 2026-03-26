@@ -5,15 +5,20 @@ This module provides a hybrid detector that uses embedding-based pre-filtering
 followed by AST verification for accurate duplicate detection.
 """
 
+from __future__ import annotations
+
 import time
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from src.normalizer.models import NormalizedProgram
-from src.similarity.models import SimilarityResult, DetectorConfig
+from src.similarity.ast_compare import compute_ast_similarity
 from src.similarity.embedding import compute_embedding, cosine_similarity
-from src.similarity.ast_compare import compute_ast_similarity, compute_ast_hash
+from src.similarity.models import DetectorConfig, SimilarityResult
+
+if TYPE_CHECKING:
+    from src.archive.program_archive import ProgramArchive
 
 
 class HybridSimilarityDetector:
@@ -25,7 +30,7 @@ class HybridSimilarityDetector:
     2. AST-based verification (accurate)
     """
 
-    def __init__(self, config: Optional[DetectorConfig] = None):
+    def __init__(self, config: DetectorConfig | None = None):
         """
         Initialize the detector.
 
@@ -149,11 +154,20 @@ class HybridSimilarityDetector:
 
         return results[:k]
 
+    def compute_behavior_similarity(self, fp_a: list[str], fp_b: list[str]) -> float:
+        """Compute behavioral similarity by aligned token agreement."""
+        if not fp_a or not fp_b:
+            return 0.0
+
+        n = min(len(fp_a), len(fp_b))
+        matches = sum(1 for i in range(n) if fp_a[i] == fp_b[i])
+        return matches / n
+
     def check_duplicate(
         self,
         program: NormalizedProgram,
-        archive: "ProgramArchive",
-    ) -> Optional[SimilarityResult]:
+        archive: ProgramArchive,
+    ) -> SimilarityResult | None:
         """
         Check if program is a duplicate of any in the archive.
 
@@ -178,7 +192,13 @@ class HybridSimilarityDetector:
                 )
 
         # Check similarity with all programs
-        candidates = list(archive)
+        candidates = [
+            NormalizedProgram(
+                canonical_code=stored_program.normalized_code,
+                ast_hash=stored_program.ast_hash,
+            )
+            for stored_program in archive
+        ]
         results = self.find_similar(program, candidates, k=1)
 
         if results and results[0].is_duplicate:

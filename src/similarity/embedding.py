@@ -5,8 +5,6 @@ This module provides tools to compute embeddings for Python code
 using sentence-transformers for semantic similarity comparison.
 """
 
-import hashlib
-from typing import Optional
 
 import numpy as np
 

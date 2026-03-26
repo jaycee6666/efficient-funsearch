@@ -8,6 +8,25 @@
 
 **Tech Stack:** Python 3.10+, pytest, ruff, existing src/* modules (normalizer/similarity/archive/integration/metrics)
 
+## Task Reference Alignment (with tasks.md)
+
+为避免 `plan.md` 的“Task 1..8”与 `tasks.md` 的 `T001..T035` 编号歧义，建立如下对齐关系：
+
+- Plan Task 1 → `T004~T006`（并与 `T005` 联动）
+- Plan Task 2 → `T008` + `T012`
+- Plan Task 3 → `T009` + `T013` + `T016`
+- Plan Task 4 → `T010` + `T011` + `T014` + `T015`
+- Plan Task 5 → `T017` + `T018` + `T019` + `T020` + `T021`
+- Plan Task 6 → `T022` + `T025` + `T027`
+- Plan Task 7 → `T023` + `T026`
+- Plan Task 8 → `T024` + `T028` + `T029` + `T030`
+
+Phase/执行收口项：
+
+- Setup: `T001~T003`
+- Foundational补充: `T007`
+- Polish & Cross-Cutting: `T031~T035`
+
 ---
 
 ### Task 1: 引入 v1 配置与数据模型（行为指纹/多样性）
@@ -420,3 +439,35 @@ git commit -m "docs: align contracts and tasks with v1 behavioral+density plan"
 - **FR-009/FR-010** → Task 8
 - **AC-001..AC-005** → Task 3/4/6/7/8 的测试与文档一致性检查
 - **SC-002..SC-004** → Task 6 + Task 7 + Verification Checklist
+
+---
+
+## Execution Notes & Traceability (T035)
+
+本轮按 `tasks.md` 顺序逐任务执行，且每个阶段均执行“先失败测试 → 实现 → 回归验证”：
+
+- Phase 1/2（T001~T007）已完成，配置字段与基础夹具已就绪。
+- US1（T008~T016）已完成：行为指纹、行为相似度、Archive 行为去重、Adapter 预评估过滤与导出均已落地。
+- US2（T017~T021）已完成：多样性排序、选择路径与选择元数据记录已落地。
+- US3（T022~T030）已完成：样本效率 η 指标、四组消融配置注册、文档一致性校验已落地。
+
+关键验证记录（可复现命令）：
+
+- `pytest tests/unit/test_similarity_models.py -v`
+- `pytest tests/unit/test_behavioral_probe.py::test_build_behavior_fingerprint_returns_stable_signature -v`
+- `pytest tests/unit/test_hybrid_detector.py::test_behavior_similarity_threshold_applied_for_duplicate_decision -v`
+- `pytest tests/unit/test_archive.py::TestProgramArchive::test_behavioral_duplicate_detection -v`
+- `pytest tests/unit/test_diversity_selection.py::test_rank_candidates_combines_performance_and_diversity -v`
+- `pytest tests/unit/test_metrics.py::test_sample_efficiency_eta_computed_from_unique_over_total -v`
+- `pytest tests/integration/test_funsearch_adapter.py::TestFunSearchAdapter::test_adapter_filters_behavioral_duplicates_before_evaluation -v`
+- `pytest tests/integration/test_funsearch_adapter.py::TestFunSearchAdapter::test_adapter_selection_path_uses_diversity_ranking -v`
+- `pytest tests/integration/test_ablation_configs.py::test_v1_ablation_configs_have_four_required_variants -v`
+- `pytest tests/integration/test_doc_alignment.py::test_documentation_mentions_behavioral_and_diversity_mainline -v`
+
+Phase 6 收口（T031~T034）在最终交付前统一执行完整 unit / integration / full-suite 与 lint。
+
+风险收敛补充（后续执行约束）：
+
+- 环境一致性：本地与 CI 统一使用 Python 3.9 解释器与工具链目标（pyproject 已对齐）。
+- 依赖隔离：对 `sentence-transformers` 的单测覆盖采用 monkeypatch 方式，避免因外部依赖缺失导致主线跳测。
+- 变更范围控制：提交前执行 `git diff --name-only` 审核，仅保留本任务相关文件；文档/笔记本改动按需独立处理。

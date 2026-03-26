@@ -1,13 +1,13 @@
-from __future__ import annotations
-
 """
 Data models for the archive module.
 """
 
+from __future__ import annotations
+
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
-import uuid
 
 
 @dataclass
@@ -73,7 +73,7 @@ class Program:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Program":
+    def from_dict(cls, data: dict[str, Any]) -> Program:
         """Create from dictionary."""
         created_at = data.get("created_at")
         if isinstance(created_at, str):

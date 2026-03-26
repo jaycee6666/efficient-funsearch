@@ -7,7 +7,12 @@
 
 ## 概述
 
-`HybridSimilarityDetector` 使用混合方法检测程序相似度：第一阶段使用代码嵌入进行快速预筛选，第二阶段使用 AST 进行精确验证。
+v1 主线为 **behavioral deduplication + diversity-guided selection**：
+
+1. 在完整评估前，使用 5–15 个探测样例构建行为指纹并进行行为去重；
+2. 在候选选择阶段，用“性能 + 多样性”联合评分维持探索广度。
+
+`HybridSimilarityDetector` 保留为底层相似度组件，不再作为唯一主线路径。
 
 ---
 

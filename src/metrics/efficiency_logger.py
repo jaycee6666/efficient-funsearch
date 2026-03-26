@@ -5,8 +5,9 @@ This module provides tools to track and analyze the efficiency gains
 from the duplicate detection system.
 """
 
+from __future__ import annotations
+
 import time
-from typing import Optional
 
 from src.metrics.models import EfficiencyMetrics
 
@@ -22,7 +23,7 @@ class EfficiencyTracker:
     def __init__(self):
         """Initialize the tracker."""
         self.metrics = EfficiencyMetrics()
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
 
     def start_session(self) -> None:
         """Start a new tracking session."""
@@ -41,7 +42,7 @@ class EfficiencyTracker:
         self.metrics.duplicates_filtered += 1
         self.metrics.llm_queries_saved += 1  # Estimate
 
-    def record_evaluation(self, time_seconds: Optional[float] = None) -> None:
+    def record_evaluation(self, time_seconds: float | None = None) -> None:
         """
         Record that a program was evaluated.
 
@@ -61,6 +62,24 @@ class EfficiencyTracker:
         """
         self.metrics.detection_time_total += time_seconds
 
+    def record_selection(
+        self,
+        candidate: str,
+        score: float,
+        diversity_score: float,
+        combined_score: float,
+    ) -> None:
+        """Record selection metadata for later analysis."""
+        selections = self.metrics.metadata.setdefault("selection_events", [])
+        selections.append(
+            {
+                "candidate": candidate,
+                "score": score,
+                "diversity_score": diversity_score,
+                "combined_score": combined_score,
+            }
+        )
+
     def end_session(self) -> EfficiencyMetrics:
         """
         End the tracking session and return metrics.
@@ -68,9 +87,18 @@ class EfficiencyTracker:
         Returns:
             Final EfficiencyMetrics object
         """
+        self.metrics.metadata.setdefault("summary", {})
+        self.metrics.metadata["summary"].update(
+            {
+                "sample_efficiency": self.metrics.sample_efficiency,
+                "duplicate_detection_rate": self.metrics.duplicate_detection_rate,
+                "convergence": self.metrics.metadata.get("convergence", 0.0),
+                "final_quality": self.metrics.metadata.get("final_quality", 0.0),
+            }
+        )
         return self.metrics
 
-    def compare_baseline(self, baseline: "EfficiencyTracker") -> dict:
+    def compare_baseline(self, baseline: EfficiencyTracker) -> dict:
         """
         Compare metrics with a baseline tracker.
 

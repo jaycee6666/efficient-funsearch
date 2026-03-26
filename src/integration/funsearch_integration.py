@@ -18,13 +18,13 @@ Usage:
 from __future__ import annotations
 
 import hashlib
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from implementation import code_manipulation, programs_database
+    pass
 
-from src.normalizer import ProgramNormalizer, NormalizedProgram
 from src.metrics import EfficiencyTracker
+from src.normalizer import ProgramNormalizer
 
 
 class FunSearchIntegration:
@@ -160,7 +160,7 @@ class FunSearchIntegration:
 
 
 # Global integration instance
-_integration: Optional[FunSearchIntegration] = None
+_integration: FunSearchIntegration | None = None
 
 
 def get_integration() -> FunSearchIntegration:
@@ -179,7 +179,7 @@ def create_patched_database_class():
         A new class that extends ProgramsDatabase with duplicate detection
     """
     try:
-        from implementation import programs_database, config as fs_config
+        from implementation import programs_database
     except ImportError:
         raise ImportError(
             "FunSearch library not installed. "
@@ -197,7 +197,7 @@ def create_patched_database_class():
         """
 
         def register_program(
-            self, program: Any, island_id: Optional[int], scores_per_test: Any, **kwargs
+            self, program: Any, island_id: int | None, scores_per_test: Any, **kwargs
         ) -> None:
             """
             Register a program, skipping duplicates.
@@ -245,7 +245,7 @@ def create_patched_evaluator_class():
         """
 
         def analyse(
-            self, sample: str, island_id: Optional[int], version_generated: Optional[int], **kwargs
+            self, sample: str, island_id: int | None, version_generated: int | None, **kwargs
         ) -> None:
             """
             Analyse a sample, skipping duplicates.
@@ -301,16 +301,16 @@ def patch_funsearch(
     _integration = FunSearchIntegration(use_normalization=use_normalization)
 
     try:
-        from implementation import programs_database, evaluator
+        from implementation import evaluator, programs_database
 
         if patch_database:
-            EfficientDB = create_patched_database_class()
+            efficient_db = create_patched_database_class()
             # Monkey-patch the class
-            programs_database.ProgramsDatabase = EfficientDB
+            programs_database.ProgramsDatabase = efficient_db
 
         if patch_evaluator:
-            EfficientEval = create_patched_evaluator_class()
-            evaluator.Evaluator = EfficientEval
+            efficient_eval = create_patched_evaluator_class()
+            evaluator.Evaluator = efficient_eval
 
         return _integration
 
@@ -327,7 +327,7 @@ def run_efficient_funsearch(
     samples_per_prompt: int = 4,
     num_evaluators: int = 1,
     num_samplers: int = 1,
-    max_sample_nums: Optional[int] = None,
+    max_sample_nums: int | None = None,
     **kwargs,
 ) -> dict[str, Any]:
     """
@@ -360,7 +360,7 @@ def run_efficient_funsearch(
         >>> print(f"Duplicates skipped: {result['duplicates_found']}")
     """
     try:
-        from implementation import funsearch, config
+        from implementation import config, funsearch
     except ImportError:
         raise ImportError(
             "FunSearch library not installed. "

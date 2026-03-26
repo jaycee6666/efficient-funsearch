@@ -117,9 +117,41 @@ EfficiencyMetrics
 ```
 
 **关键比率**:
+- 样本效率 η = `programs_evaluated / total_programs_generated`
 - 重复检测率 = `duplicates_detected / total_programs_generated`
 - LLM 节省率 = `llm_queries_saved / total_programs_generated`
 - 时间节省比 = `evaluation_time_saved / (evaluation_time_saved + detection_time_total)`
+
+---
+
+### 6. BehavioralFingerprint (行为指纹)
+
+用于在完整评估前进行行为去重的轻量表示。
+
+```
+BehavioralFingerprint
+├── program_id: str
+├── probe_count_range: tuple[int, int]   # 5..15
+├── probe_outputs: list[str]
+└── similarity_threshold: float           # > 0.95 判定重复
+```
+
+---
+
+### 7. AblationConfig (消融配置)
+
+```
+AblationConfig
+├── name: str
+└── options: dict[str, Any]
+```
+
+v1 必备四组配置：
+
+- `original`
+- `exact_string_match`
+- `normalized_hash_only`
+- `behavioral_plus_diversity`
 
 ---
 

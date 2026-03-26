@@ -2,7 +2,6 @@
 Unit tests for program archive.
 """
 
-import pytest
 
 
 class TestProgramArchive:
@@ -108,6 +107,7 @@ class TestProgramArchive:
 
         best = archive.get_best(k=2)
         assert len(best) == 2
+        assert best[0].score is not None and best[1].score is not None
         assert best[0].score >= best[1].score
 
     def test_stats(self):
@@ -149,3 +149,32 @@ class TestProgramArchive:
         loaded = ProgramArchive.load(str(save_path))
         assert len(loaded) == 1
         assert loaded.get_best(1)[0].score == 0.5
+
+    def test_behavioral_duplicate_detection(self):
+        """Behaviorally equivalent programs should be treated as duplicates."""
+        from src.archive.program_archive import ProgramArchive
+        from src.normalizer import ProgramNormalizer
+
+        archive = ProgramArchive()
+        normalizer = ProgramNormalizer()
+
+        program_a = """
+def solve(items, capacity):
+    total = 0
+    for item in items:
+        if item <= capacity:
+            total += item
+    return total
+"""
+
+        program_b = """
+def solve(xs, cap):
+    acc = 0
+    for x in xs:
+        if x <= cap:
+            acc += x
+    return acc
+"""
+
+        archive.add(program_a, normalizer.normalize(program_a), score=0.8)
+        assert archive.is_duplicate(normalizer.normalize(program_b))

@@ -51,6 +51,13 @@ models/
 logs/
 *.log
 
+# Local tool/workspace metadata
+/.opencode/
+.env
+.mypy_cache/
+.ropeproject/
+.coverage*
+
 # OS
 .DS_Store
 Thumbs.db

@@ -2,8 +2,6 @@
 Unit tests for the normalizer module.
 """
 
-import ast
-import hashlib
 import pytest
 
 from src.normalizer.models import NormalizedProgram
