@@ -7,7 +7,6 @@ Abstract Syntax Tree (AST) structure.
 
 import ast
 import hashlib
-from typing import Any
 
 
 def compute_ast_hash(code: str) -> str:
@@ -72,12 +71,9 @@ def _extract_structure(tree: ast.AST) -> set[str]:
     features = set()
 
     for node in ast.walk(tree):
-        # Node type
-        node_type = type(node).__name__
-
         # Add basic structural features
         if isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef):
-            features.add(f"func_def")
+            features.add("func_def")
             features.add(f"args_{len(node.args.args)}")
             if node.args.vararg:
                 features.add("vararg")

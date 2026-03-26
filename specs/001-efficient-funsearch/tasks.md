@@ -18,9 +18,9 @@
 
 **Purpose**: 同步 v1 规格后的任务基线，准备开发与测试入口。
 
-- [ ] T001 Update module export baseline in src/__init__.py
-- [ ] T002 [P] Verify pytest/running config in tests/conftest.py
-- [ ] T003 [P] Align feature-level task references in specs/001-efficient-funsearch/plan.md
+- [x] T001 Update module export baseline in src/__init__.py
+- [x] T002 [P] Verify pytest/running config in tests/conftest.py
+- [x] T003 [P] Align feature-level task references in specs/001-efficient-funsearch/plan.md
 
 ---
 
@@ -29,10 +29,10 @@
 **Purpose**: 建立所有用户故事共享的配置与模型基础。  
 **⚠️ CRITICAL**: 本阶段完成前，不开始任何用户故事实现。
 
-- [ ] T004 [P] Add v1 behavioral config fields in src/similarity/models.py
-- [ ] T005 [P] Add aligned archive/detector config defaults in src/config.py
-- [ ] T006 [P] Create config model tests in tests/unit/test_similarity_models.py
-- [ ] T007 Add foundational fixture support for behavioral probes in tests/fixtures/sample_programs.py
+- [x] T004 [P] Add v1 behavioral config fields in src/similarity/models.py
+- [x] T005 [P] Add aligned archive/detector config defaults in src/config.py
+- [x] T006 [P] Create config model tests in tests/unit/test_similarity_models.py
+- [x] T007 Add foundational fixture support for behavioral probes in tests/fixtures/sample_programs.py
 
 **Checkpoint**: v1 配置字段（probe 范围、行为阈值、多样性权重）可被测试读取。
 
@@ -45,18 +45,18 @@
 
 ### Tests for User Story 1 (TDD)
 
-- [ ] T008 [P] [US1] Add behavioral fingerprint stability test in tests/unit/test_behavioral_probe.py
-- [ ] T009 [P] [US1] Add behavior similarity threshold test in tests/unit/test_hybrid_detector.py
-- [ ] T010 [P] [US1] Add duplicate archive behavior test in tests/unit/test_archive.py
-- [ ] T011 [US1] Add adapter pre-evaluation filtering integration test in tests/integration/test_funsearch_adapter.py
+- [x] T008 [P] [US1] Add behavioral fingerprint stability test in tests/unit/test_behavioral_probe.py
+- [x] T009 [P] [US1] Add behavior similarity threshold test in tests/unit/test_hybrid_detector.py
+- [x] T010 [P] [US1] Add duplicate archive behavior test in tests/unit/test_archive.py
+- [x] T011 [US1] Add adapter pre-evaluation filtering integration test in tests/integration/test_funsearch_adapter.py
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Implement behavioral probe builder in src/similarity/behavioral_probe.py
-- [ ] T013 [P] [US1] Implement behavior similarity computation in src/similarity/hybrid.py
-- [ ] T014 [US1] Integrate behavioral duplicate decision path in src/archive/program_archive.py
-- [ ] T015 [US1] Enforce pre-evaluation behavioral filtering in src/integration/funsearch_adapter.py
-- [ ] T016 [US1] Export behavioral dedup interfaces in src/similarity/__init__.py
+- [x] T012 [P] [US1] Implement behavioral probe builder in src/similarity/behavioral_probe.py
+- [x] T013 [P] [US1] Implement behavior similarity computation in src/similarity/hybrid.py
+- [x] T014 [US1] Integrate behavioral duplicate decision path in src/archive/program_archive.py
+- [x] T015 [US1] Enforce pre-evaluation behavioral filtering in src/integration/funsearch_adapter.py
+- [x] T016 [US1] Export behavioral dedup interfaces in src/similarity/__init__.py
 
 **Checkpoint**: 满足 FR-001/FR-002/FR-004/FR-005 与 AC-001/AC-003。
 
@@ -69,14 +69,14 @@
 
 ### Tests for User Story 2 (TDD)
 
-- [ ] T017 [P] [US2] Add combined ranking unit test in tests/unit/test_diversity_selection.py
-- [ ] T018 [US2] Add selection-path integration test in tests/integration/test_funsearch_adapter.py
+- [x] T017 [P] [US2] Add combined ranking unit test in tests/unit/test_diversity_selection.py
+- [x] T018 [US2] Add selection-path integration test in tests/integration/test_funsearch_adapter.py
 
 ### Implementation for User Story 2
 
-- [ ] T019 [P] [US2] Implement diversity ranking utility in src/similarity/diversity.py
-- [ ] T020 [US2] Integrate performance+diversity scoring in src/integration/funsearch_adapter.py
-- [ ] T021 [US2] Record selection metadata for analysis in src/metrics/efficiency_logger.py
+- [x] T019 [P] [US2] Implement diversity ranking utility in src/similarity/diversity.py
+- [x] T020 [US2] Integrate performance+diversity scoring in src/integration/funsearch_adapter.py
+- [x] T021 [US2] Record selection metadata for analysis in src/metrics/efficiency_logger.py
 
 **Checkpoint**: 满足 FR-006 与 AC-004（联合选择原则部分）。
 
@@ -89,18 +89,18 @@
 
 ### Tests for User Story 3 (TDD)
 
-- [ ] T022 [P] [US3] Add sample efficiency formula test in tests/unit/test_metrics.py
-- [ ] T023 [P] [US3] Add required ablation variants test in tests/integration/test_ablation_configs.py
-- [ ] T024 [US3] Add docs alignment integration test in tests/integration/test_doc_alignment.py
+- [x] T022 [P] [US3] Add sample efficiency formula test in tests/unit/test_metrics.py
+- [x] T023 [P] [US3] Add required ablation variants test in tests/integration/test_ablation_configs.py
+- [x] T024 [US3] Add docs alignment integration test in tests/integration/test_doc_alignment.py
 
 ### Implementation for User Story 3
 
-- [ ] T025 [P] [US3] Implement sample efficiency property in src/metrics/models.py
-- [ ] T026 [US3] Implement v1 ablation config registry in src/integration/ablation_configs.py
-- [ ] T027 [US3] Update experiment metric emission in src/metrics/efficiency_logger.py
-- [ ] T028 [US3] Align detector contract doc for v1 in specs/001-efficient-funsearch/contracts/detector.md
-- [ ] T029 [US3] Align data model doc for behavioral entities in specs/001-efficient-funsearch/data-model.md
-- [ ] T030 [US3] Align quickstart usage to v1 flow in specs/001-efficient-funsearch/quickstart.md
+- [x] T025 [P] [US3] Implement sample efficiency property in src/metrics/models.py
+- [x] T026 [US3] Implement v1 ablation config registry in src/integration/ablation_configs.py
+- [x] T027 [US3] Update experiment metric emission in src/metrics/efficiency_logger.py
+- [x] T028 [US3] Align detector contract doc for v1 in specs/001-efficient-funsearch/contracts/detector.md
+- [x] T029 [US3] Align data model doc for behavioral entities in specs/001-efficient-funsearch/data-model.md
+- [x] T030 [US3] Align quickstart usage to v1 flow in specs/001-efficient-funsearch/quickstart.md
 
 **Checkpoint**: 满足 FR-003/FR-007/FR-008/FR-009/FR-010 与 AC-002/AC-004/AC-005。
 

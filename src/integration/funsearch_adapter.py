@@ -8,13 +8,15 @@ to detect and filter duplicate programs before evaluation.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
-from src.normalizer import ProgramNormalizer, NormalizedProgram
-from src.similarity import HybridSimilarityDetector, SimilarityResult
 from src.archive import ProgramArchive
-from src.metrics import EfficiencyTracker, EfficiencyMetrics
+from src.metrics import EfficiencyMetrics, EfficiencyTracker
+from src.normalizer import ProgramNormalizer
+from src.similarity import HybridSimilarityDetector
+from src.similarity.behavioral_probe import build_behavior_fingerprint
 
 
 @dataclass
@@ -44,11 +46,11 @@ class FunSearchConfig:
     """Threshold for AST-based duplicate confirmation."""
 
     # Evaluation settings
-    evaluation_function: Optional[Callable[[str], float]] = None
+    evaluation_function: Callable[[str], float] | None = None
     """Function to evaluate program quality."""
 
     # LLM settings (for integration with actual FunSearch)
-    llm_function: Optional[Callable[[str, list[str]], str]] = None
+    llm_function: Callable[[str, list[str]], str] | None = None
     """LLM function to generate new programs."""
 
     # Logging
@@ -62,7 +64,7 @@ class FunSearchResult:
     Result from running FunSearch with duplicate detection.
     """
 
-    best_program: Optional[str] = None
+    best_program: str | None = None
     """Best program found."""
 
     best_score: float = float("-inf")
@@ -80,7 +82,7 @@ class FunSearchResult:
     generations_run: int = 0
     """Number of generations completed."""
 
-    efficiency_metrics: Optional[EfficiencyMetrics] = None
+    efficiency_metrics: EfficiencyMetrics | None = None
     """Detailed efficiency metrics."""
 
     evaluation_time: float = 0.0
@@ -89,7 +91,7 @@ class FunSearchResult:
     detection_time: float = 0.0
     """Total time spent on duplicate detection."""
 
-    archive: Optional[ProgramArchive] = None
+    archive: ProgramArchive | None = None
     """The program archive (for inspection)."""
 
 
@@ -113,7 +115,7 @@ class FunSearchAdapter:
                 adapter.record_result(program_code, score)
     """
 
-    def __init__(self, config: Optional[FunSearchConfig] = None):
+    def __init__(self, config: FunSearchConfig | None = None):
         """
         Initialize the adapter.
 
@@ -129,9 +131,13 @@ class FunSearchAdapter:
         self.tracker = EfficiencyTracker()
 
         # State
-        self._best_program: Optional[str] = None
+        self._best_program: str | None = None
         self._best_score: float = float("-inf")
         self._total_detection_time: float = 0.0
+
+    def _behavior_probes(self) -> list[int]:
+        """Default probe set used for behavioral dedup checks."""
+        return list(range(5, 16))
 
     def is_duplicate(self, source_code: str) -> bool:
         """
@@ -158,7 +164,9 @@ class FunSearchAdapter:
         # Check against archive
         is_dup = self.archive.is_duplicate(normalized)
 
-        self._total_detection_time += time.time() - start_time
+        detection_elapsed = time.time() - start_time
+        self._total_detection_time += detection_elapsed
+        self.tracker.record_detection_time(detection_elapsed)
 
         return is_dup
 
@@ -188,9 +196,22 @@ class FunSearchAdapter:
             return False
 
         # Check for duplicate
-        if self.config.use_duplicate_detection and self.archive.is_duplicate(normalized):
-            self.tracker.record_duplicate()
-            return False
+        if self.config.use_duplicate_detection:
+            probes = self._behavior_probes()
+            candidate_fp = build_behavior_fingerprint(normalized.canonical_code, probes)
+
+            is_duplicate = False
+            for stored_program in self.archive:
+                stored_fp = build_behavior_fingerprint(stored_program.normalized_code, probes)
+                similarity = self.detector.compute_behavior_similarity(candidate_fp, stored_fp)
+                if similarity >= self.detector.config.behavior_similarity_threshold:
+                    is_duplicate = True
+                    break
+
+            if is_duplicate or self.archive.is_duplicate(normalized):
+                self.tracker.record_duplicate()
+                self.tracker.record_filtered()
+                return False
 
         # Add to archive
         self.archive.add(source_code, normalized, score, generation)
@@ -207,7 +228,7 @@ class FunSearchAdapter:
         self,
         prompt: str,
         examples: list[str],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate a new program and filter if duplicate.
 
@@ -230,10 +251,32 @@ class FunSearchAdapter:
 
         return new_program
 
+    def rank_candidates_for_selection(
+        self,
+        candidates: list[str],
+        perf_scores: dict[str, float],
+        diversity_scores: dict[str, float],
+        beta: float = 0.2,
+    ) -> list[str]:
+        """Rank candidates using performance + diversity scoring."""
+        ranked = sorted(
+            candidates,
+            key=lambda c: perf_scores[c] + beta * diversity_scores[c],
+            reverse=True,
+        )
+
+        for candidate in ranked:
+            perf = perf_scores[candidate]
+            diversity = diversity_scores[candidate]
+            combined = perf + beta * diversity
+            self.tracker.record_selection(candidate, perf, diversity, combined)
+
+        return ranked
+
     def run(
         self,
-        initial_programs: Optional[list[str]] = None,
-        evaluation_function: Optional[Callable[[str], float]] = None,
+        initial_programs: list[str] | None = None,
+        evaluation_function: Callable[[str], float] | None = None,
     ) -> FunSearchResult:
         """
         Run the FunSearch evolution process with duplicate detection.

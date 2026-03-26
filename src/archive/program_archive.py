@@ -5,16 +5,18 @@ This module provides the main ProgramArchive class for storing and
 retrieving programs with efficient duplicate detection.
 """
 
+from __future__ import annotations
+
 import json
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
-from src.archive.models import Program
-from src.normalizer.models import NormalizedProgram
 from src.archive.hash_store import HashStore
+from src.archive.models import Program
 from src.config import ArchiveConfig
+from src.normalizer.models import NormalizedProgram
+from src.similarity.behavioral_probe import build_behavior_fingerprint
+from src.similarity.hybrid import HybridSimilarityDetector
 
 
 class ArchiveStats:
@@ -25,8 +27,8 @@ class ArchiveStats:
         total_programs: int = 0,
         unique_programs: int = 0,
         duplicate_count: int = 0,
-        avg_score: Optional[float] = None,
-        best_score: Optional[float] = None,
+        avg_score: float | None = None,
+        best_score: float | None = None,
         memory_usage_mb: float = 0.0,
     ):
         self.total_programs = total_programs
@@ -45,7 +47,7 @@ class ProgramArchive:
     score-based retrieval of best programs.
     """
 
-    def __init__(self, config: Optional[ArchiveConfig] = None):
+    def __init__(self, config: ArchiveConfig | None = None):
         """
         Initialize the archive.
 
@@ -55,15 +57,17 @@ class ProgramArchive:
         self.config = config or ArchiveConfig()
         self._programs: dict[str, Program] = {}
         self._ast_index: HashStore = HashStore()
+        self._behavioral_fingerprints: dict[str, list[str]] = {}
         self._score_heap: list[tuple[float, str]] = []  # (score, program_id)
+        self._behavior_detector = HybridSimilarityDetector()
 
     def add(
         self,
         source_code: str,
         normalized: NormalizedProgram,
-        score: Optional[float] = None,
+        score: float | None = None,
         generation: int = 0,
-        parent_ids: Optional[list[str]] = None,
+        parent_ids: list[str] | None = None,
     ) -> str:
         """
         Add a program to the archive.
@@ -102,6 +106,15 @@ class ProgramArchive:
         # Add to hash index
         self._ast_index.add(normalized.ast_hash, program_id)
 
+        # Cache behavioral fingerprint for behavioral dedup path
+        probes = list(
+            range(self.config.behavior_probe_count_min, self.config.behavior_probe_count_max + 1)
+        )
+        self._behavioral_fingerprints[program_id] = build_behavior_fingerprint(
+            normalized.canonical_code,
+            probes,
+        )
+
         # Add to score heap
         if score is not None:
             self._score_heap.append((score, program_id))
@@ -109,7 +122,7 @@ class ProgramArchive:
 
         return program_id
 
-    def get(self, program_id: str) -> Optional[Program]:
+    def get(self, program_id: str) -> Program | None:
         """
         Get a program by ID.
 
@@ -131,7 +144,22 @@ class ProgramArchive:
         Returns:
             True if duplicate exists
         """
-        return self._ast_index.contains(normalized.ast_hash)
+        if self._ast_index.contains(normalized.ast_hash):
+            return True
+
+        candidate_probes = list(
+            range(self.config.behavior_probe_count_min, self.config.behavior_probe_count_max + 1)
+        )
+        candidate_fp = build_behavior_fingerprint(normalized.canonical_code, candidate_probes)
+
+        for stored_fp in self._behavioral_fingerprints.values():
+            similarity = self._behavior_detector.compute_behavior_similarity(
+                candidate_fp, stored_fp
+            )
+            if similarity >= self.config.behavior_similarity_threshold:
+                return True
+
+        return False
 
     def find_similar(
         self,
@@ -153,7 +181,24 @@ class ProgramArchive:
             program = self._programs.get(program_id)
             if program:
                 return [(program, 1.0)]
-        return []
+
+        candidate_probes = list(
+            range(self.config.behavior_probe_count_min, self.config.behavior_probe_count_max + 1)
+        )
+        candidate_fp = build_behavior_fingerprint(normalized.canonical_code, candidate_probes)
+        matches: list[tuple[Program, float]] = []
+
+        for program_id, stored_fp in self._behavioral_fingerprints.items():
+            similarity = self._behavior_detector.compute_behavior_similarity(
+                candidate_fp, stored_fp
+            )
+            if similarity >= self.config.behavior_similarity_threshold:
+                program = self._programs.get(program_id)
+                if program:
+                    matches.append((program, similarity))
+
+        matches.sort(key=lambda item: item[1], reverse=True)
+        return matches[:k]
 
     def get_best(self, k: int = 10) -> list[Program]:
         """
@@ -222,6 +267,7 @@ class ProgramArchive:
         program = self._programs.get(program_id)
         if program:
             self._ast_index.remove(program.ast_hash)
+            self._behavioral_fingerprints.pop(program_id, None)
             del self._programs[program_id]
             return True
         return False
@@ -245,7 +291,7 @@ class ProgramArchive:
             memory_usage_mb=0.0,  # Approximate
         )
 
-    def save(self, path: Optional[str] = None) -> None:
+    def save(self, path: str | None = None) -> None:
         """
         Save archive to a JSON file.
 
@@ -266,7 +312,7 @@ class ProgramArchive:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     @classmethod
-    def load(cls, path: str) -> "ProgramArchive":
+    def load(cls, path: str) -> ProgramArchive:
         """
         Load archive from a JSON file.
 
@@ -276,7 +322,7 @@ class ProgramArchive:
         Returns:
             Loaded ProgramArchive
         """
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
 
         config = ArchiveConfig.from_dict(data.get("config", {}))
@@ -286,6 +332,16 @@ class ProgramArchive:
             program = Program.from_dict(program_data)
             archive._programs[program.id] = program
             archive._ast_index.add(program.ast_hash, program.id)
+            probes = list(
+                range(
+                    archive.config.behavior_probe_count_min,
+                    archive.config.behavior_probe_count_max + 1,
+                )
+            )
+            archive._behavioral_fingerprints[program.id] = build_behavior_fingerprint(
+                program.normalized_code,
+                probes,
+            )
             if program.score is not None:
                 archive._score_heap.append((program.score, program.id))
 
@@ -295,6 +351,7 @@ class ProgramArchive:
         """Clear all programs from the archive."""
         self._programs.clear()
         self._ast_index.clear()
+        self._behavioral_fingerprints.clear()
         self._score_heap.clear()
 
     def __len__(self) -> int:

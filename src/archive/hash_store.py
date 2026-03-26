@@ -4,8 +4,7 @@ Hash store for efficient duplicate detection.
 This module provides a simple hash-based storage for quick duplicate checks.
 """
 
-import hashlib
-from typing import Dict, Set, Optional
+from __future__ import annotations
 
 
 class HashStore:
@@ -15,8 +14,8 @@ class HashStore:
 
     def __init__(self):
         """Initialize an empty hash store."""
-        self._hashes: Set[str] = set()
-        self._hash_to_id: Dict[str, str] = {}
+        self._hashes: set[str] = set()
+        self._hash_to_id: dict[str, str] = {}
 
     def add(self, hash_value: str, program_id: str) -> None:
         """
@@ -41,7 +40,7 @@ class HashStore:
         """
         return hash_value in self._hashes
 
-    def get_id(self, hash_value: str) -> Optional[str]:
+    def get_id(self, hash_value: str) -> str | None:
         """
         Get the program ID associated with a hash.
 

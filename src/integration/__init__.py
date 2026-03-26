@@ -6,22 +6,17 @@ with the FunSearch framework.
 """
 
 # Standalone adapter (works without FunSearch library)
-from src.integration.funsearch_adapter import (
+from .funsearch_adapter import (
     FunSearchAdapter,
     FunSearchConfig,
     FunSearchResult,
 )
 
 # FunSearch library integration (requires RayZhhh/funsearch)
+_funsearch_integration = None
+
 try:
-    from src.integration.funsearch_integration import (
-        FunSearchIntegration,
-        get_integration,
-        patch_funsearch,
-        run_efficient_funsearch,
-        create_patched_database_class,
-        create_patched_evaluator_class,
-    )
+    from . import funsearch_integration as _funsearch_integration
 
     FUNSEARCH_LIBRARY_AVAILABLE = True
 except ImportError:
@@ -36,6 +31,14 @@ __all__ = [
 
 # Add library integration exports if available
 if FUNSEARCH_LIBRARY_AVAILABLE:
+    assert _funsearch_integration is not None
+    FunSearchIntegration = _funsearch_integration.FunSearchIntegration
+    get_integration = _funsearch_integration.get_integration
+    patch_funsearch = _funsearch_integration.patch_funsearch
+    run_efficient_funsearch = _funsearch_integration.run_efficient_funsearch
+    create_patched_database_class = _funsearch_integration.create_patched_database_class
+    create_patched_evaluator_class = _funsearch_integration.create_patched_evaluator_class
+
     __all__.extend(
         [
             "FunSearchIntegration",

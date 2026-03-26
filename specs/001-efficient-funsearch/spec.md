@@ -4,7 +4,7 @@
 **Created**: 2026-02-23  
 **Updated**: 2026-03-26  
 **Status**: Draft  
-**Input**: proposal updated from `proposal_v0.tex` to `proposal_v1.tex`
+**Input**: proposal aligned to `proposal_v1.tex`
 
 ## User Scenarios & Testing *(mandatory)*
 

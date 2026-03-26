@@ -5,10 +5,12 @@ This package provides tools to improve the sample efficiency of FunSearch by
 detecting and filtering out functionally duplicate programs before evaluation.
 """
 
-from src.normalizer import ProgramNormalizer, NormalizedProgram
-from src.similarity import HybridSimilarityDetector, SimilarityResult
-from src.archive import ProgramArchive, Program
-from src.metrics import EfficiencyTracker, EfficiencyMetrics
+from src.archive import Program, ProgramArchive
+from src.config import ArchiveConfig
+from src.integration import FunSearchAdapter, FunSearchConfig, FunSearchResult
+from src.metrics import EfficiencyMetrics, EfficiencyTracker
+from src.normalizer import NormalizedProgram, ProgramNormalizer
+from src.similarity import DetectorConfig, HybridSimilarityDetector, SimilarityResult
 
 __version__ = "0.1.0"
 __all__ = [
@@ -16,8 +18,13 @@ __all__ = [
     "NormalizedProgram",
     "HybridSimilarityDetector",
     "SimilarityResult",
+    "DetectorConfig",
     "ProgramArchive",
     "Program",
     "EfficiencyTracker",
     "EfficiencyMetrics",
+    "ArchiveConfig",
+    "FunSearchAdapter",
+    "FunSearchConfig",
+    "FunSearchResult",
 ]

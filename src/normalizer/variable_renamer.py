@@ -6,11 +6,9 @@ to a canonical form (var_0, var_1, etc.).
 """
 
 import ast
-from typing import Dict, Set
-
 
 # Python builtins that should not be renamed
-BUILTINS: Set[str] = {
+BUILTINS: set[str] = {
     "abs",
     "all",
     "any",
@@ -106,7 +104,7 @@ class VariableRenamer(ast.NodeTransformer):
 
     def __init__(self):
         """Initialize the renamer with an empty name mapping."""
-        self.name_map: Dict[str, str] = {}
+        self.name_map: dict[str, str] = {}
         self.counter: int = 0
 
     def _get_canonical_name(self, name: str) -> str:

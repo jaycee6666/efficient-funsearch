@@ -7,10 +7,14 @@ from pathlib import Path
 
 import pytest
 
-# Add src to path for imports
-src_path = Path(__file__).parent.parent / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
+# Add project root and src to path for imports
+project_root = Path(__file__).parent.parent
+src_path = project_root / "src"
+
+for path in (project_root, src_path):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 
 @pytest.fixture
@@ -31,11 +35,11 @@ def sample_program_with_docstring():
 def heuristic(items, capacity):
     """
     Greedy heuristic for bin packing.
-    
+
     Args:
         items: List of item sizes
         capacity: Bin capacity
-        
+
     Returns:
         Number of bins used
     """

@@ -44,6 +44,8 @@ print(f"LLM queries saved: {result.metrics.llm_queries_saved}")
 
 ## 完整使用示例
 
+> v1 默认流程：**behavioral deduplication → full evaluation → diversity-guided selection**。
+
 ### 1. 基础用法
 
 ```python
@@ -105,22 +107,18 @@ result = enhanced.run(iterations=100)
 print(result.metrics.summary())
 ```
 
-### 3. 自定义相似度阈值
+### 3. 行为去重与多样性权重
 
 ```python
 from efficient_funsearch import HybridSimilarityDetector
 
-# 保守设置 (更多程序通过，更少误报)
-detector_conservative = HybridSimilarityDetector(
-    embedding_threshold=0.98,  # 更高
-    ast_threshold=0.99
-)
+# v1 配置示例
+detector_v1 = HybridSimilarityDetector()
 
-# 激进设置 (更多过滤，节省更多资源)
-detector_aggressive = HybridSimilarityDetector(
-    embedding_threshold=0.90,  # 更低
-    ast_threshold=0.95
-)
+print(detector_v1.config.behavior_probe_count_min)   # 5
+print(detector_v1.config.behavior_probe_count_max)   # 15
+print(detector_v1.config.behavior_similarity_threshold)  # 0.95
+print(detector_v1.config.diversity_weight)           # 0.2
 ```
 
 ### 4. 离线模式 (无需 GPU)

@@ -5,9 +5,10 @@ This module provides tools to normalize Python code into a canonical form
 by removing docstrings, comments, and standardizing variable names.
 """
 
+from __future__ import annotations
+
 import ast
 import hashlib
-from typing import Optional
 
 from src.normalizer.models import NormalizedProgram
 from src.normalizer.variable_renamer import VariableRenamer
@@ -71,7 +72,7 @@ class ProgramNormalizer:
             original_source=source_code,
         )
 
-    def normalize_batch(self, source_codes: list[str]) -> list[Optional[NormalizedProgram]]:
+    def normalize_batch(self, source_codes: list[str]) -> list[NormalizedProgram | None]:
         """
         Normalize multiple programs.
 

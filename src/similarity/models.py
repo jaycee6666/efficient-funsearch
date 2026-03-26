@@ -4,7 +4,6 @@ Data models for the similarity module.
 
 from dataclasses import dataclass, field
 from typing import Any
-import time
 
 
 @dataclass
@@ -122,6 +121,18 @@ class DetectorConfig:
     fallback_to_ast: bool = True
     """Whether to fall back to AST-only mode if embedding fails."""
 
+    behavior_probe_count_min: int = 5
+    """Minimum number of probe inputs for behavioral fingerprinting."""
+
+    behavior_probe_count_max: int = 15
+    """Maximum number of probe inputs for behavioral fingerprinting."""
+
+    behavior_similarity_threshold: float = 0.95
+    """Threshold to classify two behavior fingerprints as duplicates."""
+
+    diversity_weight: float = 0.2
+    """Weight of diversity term in performance+diversity ranking."""
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -132,6 +143,10 @@ class DetectorConfig:
             "max_workers": self.max_workers,
             "timeout_seconds": self.timeout_seconds,
             "fallback_to_ast": self.fallback_to_ast,
+            "behavior_probe_count_min": self.behavior_probe_count_min,
+            "behavior_probe_count_max": self.behavior_probe_count_max,
+            "behavior_similarity_threshold": self.behavior_similarity_threshold,
+            "diversity_weight": self.diversity_weight,
         }
 
     @classmethod
@@ -145,4 +160,8 @@ class DetectorConfig:
             max_workers=data.get("max_workers", 4),
             timeout_seconds=data.get("timeout_seconds", 1.0),
             fallback_to_ast=data.get("fallback_to_ast", True),
+            behavior_probe_count_min=data.get("behavior_probe_count_min", 5),
+            behavior_probe_count_max=data.get("behavior_probe_count_max", 15),
+            behavior_similarity_threshold=data.get("behavior_similarity_threshold", 0.95),
+            diversity_weight=data.get("diversity_weight", 0.2),
         )

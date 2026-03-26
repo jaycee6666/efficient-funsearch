@@ -15,11 +15,11 @@ def priority(item, bins):
 SIMPLE_PROGRAM_WITH_DOCSTRING = '''
 def heuristic(items, capacity):
     """Greedy heuristic for bin packing.
-    
+
     Args:
         items: List of item sizes
         capacity: Bin capacity
-        
+
     Returns:
         Number of bins used
     """
@@ -106,6 +106,19 @@ def heuristic(items, capacity):
     return len(bins)
 '''
 
+# Behavioral probe fixtures (v1)
+BEHAVIOR_PROBES_SMALL = [1, 2, 3, 4, 5]
+
+BEHAVIOR_PROBES_EDGE = [0, 1, -1, 10**3, -(10**3)]
+
+BEHAVIOR_PROBES_MIXED = [
+    ([], 10),
+    ([1], 10),
+    ([9, 1, 2], 10),
+    ([5, 5, 5], 10),
+    ([2, 3, 7, 8], 10),
+]
+
 # Invalid programs (for edge case testing)
 INVALID_PROGRAM_SYNTAX = "def foo(:\n    return 1"
 
@@ -134,3 +147,12 @@ def get_duplicate_pair():
 def get_different_pair():
     """Get a pair of functionally different programs."""
     return DIFFERENT_PROGRAM_A, DIFFERENT_PROGRAM_B
+
+
+def get_behavior_probe_sets():
+    """Get behavioral probe sets for v1 fingerprint tests."""
+    return {
+        "small": BEHAVIOR_PROBES_SMALL,
+        "edge": BEHAVIOR_PROBES_EDGE,
+        "mixed": BEHAVIOR_PROBES_MIXED,
+    }

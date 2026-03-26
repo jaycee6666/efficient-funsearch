@@ -2,7 +2,6 @@
 Integration tests for FunSearch adapter.
 """
 
-import pytest
 
 
 class TestFunSearchAdapter:
@@ -208,6 +207,33 @@ def solve(xs, cap):
         # Should not be recorded
         result = adapter.record_result(invalid_code, score=1.0)
         assert result is False
+
+    def test_adapter_filters_behavioral_duplicates_before_evaluation(self):
+        """Behavioral duplicates should be filtered before full evaluation."""
+        from src.integration.funsearch_adapter import FunSearchAdapter
+
+        adapter = FunSearchAdapter()
+
+        code_a = "def solve(x): return x + 1"
+        code_b = "def solve(y): return y + 1"
+
+        assert adapter.record_result(code_a, 1.0) is True
+        assert adapter.record_result(code_b, 2.0) is False
+
+    def test_adapter_selection_path_uses_diversity_ranking(self):
+        """Selection ordering should account for performance + diversity."""
+        from src.integration.funsearch_adapter import FunSearchAdapter
+
+        adapter = FunSearchAdapter()
+
+        ranked = adapter.rank_candidates_for_selection(
+            candidates=["a", "b"],
+            perf_scores={"a": 0.8, "b": 0.79},
+            diversity_scores={"a": 0.1, "b": 0.6},
+            beta=0.2,
+        )
+
+        assert ranked[0] == "b"
 
 
 class TestFunSearchResult:

@@ -2,23 +2,23 @@
 Unit tests for hybrid similarity detector.
 """
 
+import numpy as np
 import pytest
 
 
-# Check if sentence-transformers is available
-def _has_sentence_transformers():
-    try:
-        import sentence_transformers  # noqa: F401
+@pytest.fixture
+def mock_embedding(monkeypatch):
+    """Deterministic embedding mock to avoid external dependency in unit tests."""
+    import src.similarity.hybrid as hybrid_module
 
-        return True
-    except ImportError:
-        return False
+    def _fake_compute_embedding(code: str) -> np.ndarray:
+        if "class" in code:
+            return np.array([1.0, 0.0], dtype=np.float32)
+        if "bar" in code:
+            return np.array([0.7, 0.7], dtype=np.float32)
+        return np.array([0.0, 1.0], dtype=np.float32)
 
-
-requires_embedding = pytest.mark.skipif(
-    not _has_sentence_transformers(),
-    reason="sentence-transformers not installed. Run in Google Colab.",
-)
+    monkeypatch.setattr(hybrid_module, "compute_embedding", _fake_compute_embedding)
 
 
 class TestHybridSimilarityDetector:
@@ -46,8 +46,8 @@ class TestHybridSimilarityDetector:
 
     def test_is_similar_identical_programs(self):
         """Test that identical programs are detected as similar."""
-        from src.similarity.hybrid import HybridSimilarityDetector
         from src.normalizer.models import NormalizedProgram
+        from src.similarity.hybrid import HybridSimilarityDetector
 
         detector = HybridSimilarityDetector()
         code = "def foo(): return 1"
@@ -64,11 +64,10 @@ class TestHybridSimilarityDetector:
         result = detector.is_similar(program_a, program_b)
         assert result.is_duplicate
 
-    @requires_embedding
-    def test_is_similar_different_programs(self):
+    def test_is_similar_different_programs(self, mock_embedding):
         """Test that different programs are not detected as similar."""
-        from src.similarity.hybrid import HybridSimilarityDetector
         from src.normalizer.models import NormalizedProgram
+        from src.similarity.hybrid import HybridSimilarityDetector
 
         detector = HybridSimilarityDetector()
         code_a = "def foo(): return 1"
@@ -86,11 +85,10 @@ class TestHybridSimilarityDetector:
         result = detector.is_similar(program_a, program_b)
         assert not result.is_duplicate
 
-    @requires_embedding
-    def test_find_similar(self):
+    def test_find_similar(self, mock_embedding):
         """Test finding similar programs in a list."""
-        from src.similarity.hybrid import HybridSimilarityDetector
         from src.normalizer.models import NormalizedProgram
+        from src.similarity.hybrid import HybridSimilarityDetector
 
         detector = HybridSimilarityDetector()
 
@@ -123,8 +121,8 @@ class TestHybridSimilarityDetector:
 
     def test_detection_method_tracking(self):
         """Test that detection method is tracked."""
-        from src.similarity.hybrid import HybridSimilarityDetector
         from src.normalizer.models import NormalizedProgram
+        from src.similarity.hybrid import HybridSimilarityDetector
 
         detector = HybridSimilarityDetector()
         program_a = NormalizedProgram(
@@ -138,3 +136,12 @@ class TestHybridSimilarityDetector:
 
         result = detector.is_similar(program_a, program_b)
         assert result.detection_method in ["embedding_only", "ast_only", "hybrid", "hash_match"]
+
+
+def test_behavior_similarity_threshold_applied_for_duplicate_decision():
+    from src.similarity.hybrid import HybridSimilarityDetector
+
+    detector = HybridSimilarityDetector()
+    score = detector.compute_behavior_similarity(["1", "2"], ["1", "2"])
+
+    assert score > 0.95

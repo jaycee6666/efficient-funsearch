@@ -2,10 +2,10 @@
 Data models for the metrics module.
 """
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
-import uuid
 
 
 @dataclass
@@ -45,6 +45,13 @@ class EfficiencyMetrics:
 
     metadata: dict[str, Any] = field(default_factory=dict)
     """Additional metadata."""
+
+    @property
+    def sample_efficiency(self) -> float:
+        """Sample efficiency η = N_unique / N_total."""
+        if self.total_programs_generated == 0:
+            return 0.0
+        return self.programs_evaluated / self.total_programs_generated
 
     @property
     def duplicate_detection_rate(self) -> float:
@@ -100,6 +107,7 @@ class EfficiencyMetrics:
             "llm_queries_saved": self.llm_queries_saved,
             "evaluation_time_saved": self.evaluation_time_saved,
             "detection_time_total": self.detection_time_total,
+            "sample_efficiency": self.sample_efficiency,
             "duplicate_detection_rate": self.duplicate_detection_rate,
             "llm_savings_rate": self.llm_savings_rate,
             "time_savings_ratio": self.time_savings_ratio,
