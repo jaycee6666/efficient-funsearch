@@ -20,7 +20,7 @@
 
 在 LLM 驱动的程序搜索（如 FunSearch）中，常出现大量“语法不同但行为等价”的候选程序。若这些候选都进入完整评估，会显著浪费 API 调用与算力预算，导致样本效率下降。
 
-本项目聚焦在线装箱任务，目标是在不降低最终解质量的前提下提升搜索效率。我们采用两条主线机制：
+本项目聚焦在线装箱任务，目标是在不降低最终解质量的前提下提升搜索效率。在 Phase 1 基线实验中（53 个样本，OR3 数据集，gpt-5-nano），我们发现 **45% 的评估调用产生的分数与已有程序完全相同**，说明这些程序在行为上是冗余的。这意味着近一半的 LLM API 调用和评估时间都浪费在了重复程序上。我们采用两条主线机制：
 
 1. 在完整评估前执行行为去重；
 2. 在候选选择中加入多样性引导，避免搜索过早塌缩。
@@ -78,34 +78,49 @@
 
 ## 4. 初步结果
 
-### 4.1 当前工程证据
+### 4.1 基线实验配置
+
+我们运行了 Phase 1 基线实验，用于量化原始 FunSearch 在在线装箱任务上的自然重复率与收敛行为。
+
+**实验配置：**
+
+| 参数 | 值 |
+|------|-----|
+| LLM 模型 | gpt-5-nano（reasoning model）|
+| 数据集 | OR3（20 个在线装箱实例）|
+| 总样本数 | 53（10 个 seed + 43 个 LLM 生成）|
+| Island 数量 | 10 |
+| 每次 prompt 采样数 | 4 |
+| 评估超时 | 30 秒 |
+| 总墙钟时间 | ~40 分钟 |
+
+### 4.2 关键发现
+
+**发现 1：45% 自然重复率** — 仅 53 个样本中，45% 的评估结果与已有程序完全相同。近一半 API 调用和评估时间浪费在行为冗余的程序上，直接支撑了 Phase 2 行为去重方案的必要性。
+
+**发现 2：搜索提前收敛** — 约在第 8 个样本时发现了接近最优的策略（分数 ≈ −212.1），之后 45+ 个样本的提升不足 0.1 分。这支撑了 Phase 3 多样性引导选择的动机。
+
+**发现 3：100% 成功率** — 全部 53 个程序均成功执行并获得有效评分，基础设施运行可靠。
+
+### 4.3 基线指标
+
+| 指标 | 值 |
+|------|-----|
+| N_total（总程序数）| 53 |
+| N_unique（唯一分数数）| 29 |
+| 样本效率 η | 0.55 |
+| 自然重复率 | 0.45 |
+| 最佳分数 | −212.0 |
+| 均值 ± 标准差 | −345.79 ± 122.02 |
+| 收敛（第 8 个样本后改进）| < 0.1 分 |
+| 平均评估时间 | 4.14 秒/样本 |
+| 平均采样时间 | 42.50 秒/样本 |
+
+### 4.4 工程验证
 
 - `ruff check .` 已通过
 - `pytest -q -rs` 已通过：**65 passed, 0 skipped**
 - US1/US2/US3 主线路径均已由单元与集成测试覆盖
-
-### 4.2 初步结果表
-
-本表对应的 benchmark 口径：OR-Library `binpack1.txt` 前 3 个实例（`u120_00`、`u120_01`、`u120_02`），单代（1-generation）初步运行。
-`Final Quality Proxy` 取 3 个实例上 `(best_known_bins / bins_used)` 的平均值（越高越好）。
-
-| Setting | N_total | N_unique | Sample Efficiency η | Duplicate Rate | Convergence Proxy | Final Quality Proxy | Status |
-|---|---:|---:|---:|---:|---:|---:|---|
-| original | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| exact_string_match | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| normalized_hash_only | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| behavioral_plus_diversity | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-
-### 4.3 填表口径说明
-
-每个 setting 跑一次实验后，按下面映射填：
-
-1. **N_total**：`total_programs_generated`
-2. **N_unique**：`programs_evaluated`
-3. **Sample Efficiency η**：`N_unique / N_total`（或 `sample_efficiency`）
-4. **Duplicate Rate**：`duplicates_detected / total_programs_generated`（或 `duplicate_detection_rate`）
-5. **Convergence Proxy**：统一定义可比口径
-6. **Final Quality Proxy**：最终质量指标（如 best score）
 
 ---
 
