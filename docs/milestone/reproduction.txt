@@ -89,3 +89,34 @@ PY
 - src/metrics/models.py
 - tests/integration/test_funsearch_adapter.py
 - tests/integration/test_ablation_configs.py
+
+7) Reproduce real FunSearch baseline experiment
+
+=== Real FunSearch Baseline Reproduction ===
+
+Environment:
+- Python 3.10 (conda environment recommended)
+- Dependencies: funsearch-baseline/requirements.txt
+
+Steps:
+  a) conda create -n funsearch python=3.10  # (skip if already exists)
+  b) conda activate funsearch
+  c) pip install -r funsearch-baseline/requirements.txt
+  d) cd funsearch-baseline/
+  e) export API_KEY="<your-key>"
+  f) export API_BASE="api.bltcy.ai"
+  g) export API_MODEL="gpt-5-nano"
+  h) python funsearch_bin_packing_llm_api.py
+
+Analyze results:
+  i) cd ..
+  j) python scripts/analyze_baseline.py --log-dir funsearch-baseline/logs/baseline_50samples
+
+Expected output (pre-run logs already included in the repo at funsearch-baseline/logs/baseline_50samples/):
+- summary.json contains: total_samples=53, best_score=-212.0, natural_dup_rate≈0.45
+- natural_dup_rate should be in range 0.40–0.50 (varies with LLM randomness)
+- best_score should be approximately -212 to -220
+
+Note: Running the full experiment requires a valid API key and takes ~40 minutes.
+      The pre-run logs in funsearch-baseline/logs/baseline_50samples/ can be used
+      to reproduce the analysis without re-running the LLM experiment.
