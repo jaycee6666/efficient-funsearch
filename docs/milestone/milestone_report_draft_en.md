@@ -20,7 +20,7 @@
 
 LLM-driven program search (e.g., FunSearch) often generates many behaviorally redundant candidates. Although these candidates may look syntactically different, they can make equivalent decisions on the target task. Evaluating such duplicates wastes API calls and compute, reducing sample efficiency.
 
-Our project focuses on online bin packing and aims to improve search efficiency without sacrificing final solution quality. We use two mechanisms:
+Our project focuses on online bin packing and aims to improve search efficiency without sacrificing final solution quality. In our Phase 1 baseline experiment (53 samples, OR3 dataset, gpt-5-nano), we found that **45% of all evaluated programs produced scores identical to already-seen programs**, suggesting they are behaviorally redundant. This means nearly half of all LLM API calls and evaluation time are wasted on duplicate programs. We use two mechanisms:
 
 1. Behavioral deduplication before full evaluation;
 2. Diversity-guided selection to avoid early strategy collapse.
@@ -78,34 +78,49 @@ Metrics include sample efficiency, duplicate detection rate, convergence, and fi
 
 ## 4. Preliminary Results
 
-### 4.1 Current Engineering Evidence
+### 4.1 Baseline Experiment Setup
+
+We ran a Phase 1 baseline experiment to characterize the natural duplicate rate and convergence behavior of unmodified FunSearch on the online bin packing task.
+
+**Configuration:**
+
+| Parameter | Value |
+|-----------|-------|
+| LLM Model | gpt-5-nano (reasoning model) |
+| Dataset | OR3 (20 Online Bin Packing instances) |
+| Total Samples | 53 (10 seeds + 43 LLM-generated) |
+| Islands | 10 |
+| Samples per Prompt | 4 |
+| Evaluation Timeout | 30 s |
+| Total Wall Time | ~40 min |
+
+### 4.2 Key Findings
+
+**Finding 1: 45% natural duplicate rate** — in only 53 samples, 45% of evaluations produced scores identical to already-seen programs. Nearly half of API calls and evaluation time are wasted on behaviorally redundant programs. This directly motivates our behavioral deduplication approach (Phase 2).
+
+**Finding 2: Early convergence** — the search discovered near-optimal strategies by sample #8 (score ≈ −212.1), with fewer than 0.1-point improvement over the subsequent 45+ samples. This motivates diversity-guided selection (Phase 3).
+
+**Finding 3: 100% success rate** — all 53 programs executed successfully and received valid scores, confirming infrastructure reliability.
+
+### 4.3 Baseline Results
+
+| Metric | Value |
+|--------|-------|
+| N_total (total programs) | 53 |
+| N_unique (unique scores) | 29 |
+| Sample Efficiency η | 0.55 |
+| Natural Duplicate Rate | 0.45 |
+| Best Score | −212.0 |
+| Mean Score ± Std | −345.79 ± 122.02 |
+| Convergence (improvement after sample #8) | < 0.1 |
+| Avg Evaluation Time | 4.14 s/sample |
+| Avg Sampling Time | 42.50 s/sample |
+
+### 4.4 Engineering Validation
 
 - `ruff check .` passed
 - `pytest -q -rs` passed: **65 passed, 0 skipped**
-- US1/US2/US3 paths are covered by unit/integration tests
-
-### 4.2 Preliminary Results Table
-
-Benchmark setup used for this table: OR-Library `binpack1.txt`, first 3 instances (`u120_00`, `u120_01`, `u120_02`), single-generation preliminary run.
-`Final Quality Proxy` is average `(best_known_bins / bins_used)` across these instances (higher is better).
-
-| Setting | N_total | N_unique | Sample Efficiency η | Duplicate Rate | Convergence Proxy | Final Quality Proxy | Status |
-|---|---:|---:|---:|---:|---:|---:|---|
-| original | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| exact_string_match | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| normalized_hash_only | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-| behavioral_plus_diversity | 4 | 4 | 1.0000 | 0.0000 | OR-Library prelim (1 generation) | 0.9861 | OR-Library preliminary measured |
-
-### 4.3 Metric Mapping
-
-For each setting/run:
-
-1. **N_total** = `total_programs_generated`
-2. **N_unique** = `programs_evaluated`
-3. **Sample Efficiency η** = `N_unique / N_total` (or `sample_efficiency`)
-4. **Duplicate Rate** = `duplicates_detected / total_programs_generated` (or `duplicate_detection_rate`)
-5. **Convergence Proxy** = consistently defined convergence proxy
-6. **Final Quality Proxy** = final quality metric (e.g., best score)
+- US1/US2/US3 paths covered by unit/integration tests
 
 ---
 
