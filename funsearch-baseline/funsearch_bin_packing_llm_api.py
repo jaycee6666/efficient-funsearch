@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+import sys
 from typing import Collection, Any
 import http.client
 from implementation import funsearch
@@ -11,11 +12,8 @@ from implementation import evaluator
 from implementation import code_manipulation
 import bin_packing_utils
 
-import json
-import multiprocessing
-from typing import Collection, Any
-import http.client
-from implementation import sampler
+# Phase 2: 将仓库根目录加入 sys.path，以便 import src.dedup
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 
 def _trim_preface_of_body(sample: str) -> str:
@@ -289,8 +287,21 @@ def priority(item: float, bins: np.ndarray) -> np.ndarray:
 # It should be noted that the if __name__ == '__main__' is required.
 # Because the inner code uses multiprocess evaluation.
 if __name__ == '__main__':
+    # Phase 2: 导入去重配置（可通过环境变量 DEDUP_ENABLED=0 关闭）
+    dedup_config = None
+    if os.environ.get('DEDUP_ENABLED', '1') != '0':
+        try:
+            from src.dedup.dedup_config import DedupConfig
+            dedup_config = DedupConfig(enabled=True)
+        except ImportError:
+            print("[Warning] src.dedup not found, disabling dedup")
+
     class_config = config.ClassConfig(llm_class=LLMAPI, sandbox_class=Sandbox)
-    config = config.Config(samples_per_prompt=4, evaluate_timeout_seconds=30)
+    config = config.Config(
+        samples_per_prompt=4,
+        evaluate_timeout_seconds=30,
+        dedup=dedup_config,  # Phase 2: 传入去重配置
+    )
 
     bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
     global_max_sample_num = 51  # 计数器从1起，设51可实际生成50个LLM样本

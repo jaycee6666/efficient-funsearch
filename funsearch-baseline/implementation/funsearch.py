@@ -75,6 +75,20 @@ def main(
     else:
         profiler = profile.Profiler(log_dir)
 
+    # Phase 2: 创建去重过滤器（如果配置了 dedup）
+    dedup_filter = None
+    if config.dedup is not None:
+        try:
+            from src.dedup.dedup_filter import DedupFilter
+            dedup_filter = DedupFilter(
+                config=config.dedup,
+                template_str=str(template),
+                function_to_evolve=function_to_evolve,
+            )
+            print(f"[FunSearch] Phase 2 行为去重已启用")
+        except ImportError as e:
+            print(f"[FunSearch] 去重模块导入失败，将跳过去重: {e}")
+
     evaluators = []
     for _ in range(config.num_evaluators):
         evaluators.append(evaluator.Evaluator(
@@ -84,7 +98,8 @@ def main(
             function_to_run,
             inputs,
             timeout_seconds=config.evaluate_timeout_seconds,
-            sandbox_class=class_config.sandbox_class
+            sandbox_class=class_config.sandbox_class,
+            dedup_filter=dedup_filter,
         ))
 
     # We send the initial implementation to be analysed by one of the evaluators.
@@ -100,3 +115,7 @@ def main(
     # sampler will do any work.
     for s in samplers:
         s.sample(profiler=profiler)
+
+    # Phase 2: 搜索结束后打印去重统计报告
+    if profiler and hasattr(profiler, 'has_dedup_data') and profiler.has_dedup_data:
+        print("\n" + profiler.dedup_summary())
