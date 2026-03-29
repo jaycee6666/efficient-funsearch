@@ -21,7 +21,7 @@ class DedupConfig:
     enabled: bool = True
     level0_enabled: bool = True
     level1_enabled: bool = True
-    level2_enabled: bool = True
+    level2_enabled: bool = False       # 375 维指纹下余弦相似度无区分力，暂禁用
     cosine_threshold: float = 0.98
     probe_timeout_seconds: int = 5
     validation_interval: int = 50

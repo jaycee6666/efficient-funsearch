@@ -304,6 +304,17 @@ if __name__ == '__main__':
     )
 
     bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
+    # --- 15 样本小规模验证（已通过，Round 2 去重率 50%，best=-232.95） ---
+    # global_max_sample_num = 16
+    # funsearch.main(
+    #     specification=specification,
+    #     inputs=bin_packing_or3,
+    #     config=config,
+    #     max_sample_nums=global_max_sample_num,
+    #     class_config=class_config,
+    #     log_dir='logs/dedup_15samples_v2',
+    # )
+
     global_max_sample_num = 51  # 计数器从1起，设51可实际生成50个LLM样本
     funsearch.main(
         specification=specification,
@@ -311,5 +322,5 @@ if __name__ == '__main__':
         config=config,
         max_sample_nums=global_max_sample_num,
         class_config=class_config,
-        log_dir='logs/baseline_50samples',
+        log_dir='logs/dedup_50samples_v2',
     )
