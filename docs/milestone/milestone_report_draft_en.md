@@ -139,5 +139,6 @@ Expected:
 ### 5.1 Pre-submission Quality Gate Snapshot (2026-03-30)
 
 - `ruff check .` → **All checks passed!**
-- `pytest -q -rs` → **65 passed in 0.29s**
+- `pytest -q -rs` → **65 passed in 0.27s**
 
+![Pre-submission Quality Gate Snapshot](Pre-submission Quality Gate Snapshot.png)
