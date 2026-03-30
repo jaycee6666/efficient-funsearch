@@ -132,12 +132,10 @@ class ProgramVisitor(ast.NodeVisitor):
             self._current_function = node.name
 
             # -------------------------------------------------------------------------
-            # RZ: BUGS!!! 这里问题很大 没有考虑到一些极端的情况 例如解析到的第一个函数就有装饰器
-            # 如果解析的第一个函数有装饰器 那么装饰器也会被保留在前面的代码片段中
-            # 但在算法的流程中 这个装饰器是无效的 后续评估会报错
-            # Here is an issue: some cases were not taken into consideration.
-            # For instance, if the first parsed function has decorators,
-            # these decorators will also be retained in the preceding code snippet.
+            # RZ: BUGS!!! There is a major issue here: some edge cases were not considered,
+            # e.g., when the first parsed function has decorators.
+            # If the first parsed function has decorators, they will also be retained
+            # in the preceding code snippet (preface).
             # However, in the algorithm's flow, these decorators are invalid,
             # leading to subsequent evaluations reporting errors.
             # -------------------------------------------------------------------------
@@ -145,7 +143,7 @@ class ProgramVisitor(ast.NodeVisitor):
             #     self._preface = '\n'.join(self._codelines[:node.lineno - 1])
             # -------------------------------------------------------------------------
 
-            # TODO Fix bugs 判断下如果函数 is decorated, 找到装饰器的最小行号, 并只保留其上面的部分作为 preface
+            # TODO Fix bugs: if the function is decorated, find the minimum line number of decorators and only keep the code above as preface
             if not self._functions:
                 has_decorators = bool(node.decorator_list)
                 if has_decorators:

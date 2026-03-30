@@ -153,7 +153,7 @@ class Evaluator:
             inputs: Sequence[Any],  # RZ: I guess this refers to the evaluate instance
             timeout_seconds: int = 30,
             sandbox_class: Type[Sandbox] = Sandbox,
-            dedup_filter=None,  # Phase 2: 行为去重过滤器（DedupFilter 实例或 None）
+            dedup_filter=None,  # Phase 2: Behavioral dedup filter (DedupFilter instance or None)
     ):
         self._database = database
         self._template = template
@@ -162,7 +162,7 @@ class Evaluator:
         self._inputs = inputs
         self._timeout_seconds = timeout_seconds
         self._sandbox = sandbox_class()
-        self._dedup_filter = dedup_filter  # Phase 2: 去重过滤器
+        self._dedup_filter = dedup_filter  # Phase 2: Dedup filter
 
     def analyse(
             self,
@@ -183,7 +183,7 @@ class Evaluator:
         new_function, program = _sample_to_program(
             sample, version_generated, self._template, self._function_to_evolve)
 
-        # ========== Phase 2: 行为去重检查 ==========
+        # ========== Phase 2: Behavioral dedup check ==========
         if self._dedup_filter is not None:
             dedup_result = self._dedup_filter.check(program, new_function.body)
             profiler = kwargs.get('profiler', None)
@@ -192,22 +192,22 @@ class Evaluator:
                     dedup_result,
                     global_sample_nums=kwargs.get('global_sample_nums'))
             if dedup_result.is_duplicate and not dedup_result.is_validation_pass:
-                # 记录被跳过的样本到 profiler（score=None, evaluate_time=0）
+                # Record skipped sample to profiler (score=None, evaluate_time=0)
                 if profiler:
                     new_function.global_sample_nums = kwargs.get('global_sample_nums')
                     new_function.score = None
                     new_function.sample_time = kwargs.get('sample_time')
                     new_function.evaluate_time = 0.0
-                    # Phase 2: 设置去重相关字段，供 CSV 日志记录
+                    # Phase 2: Set dedup-related fields for CSV logging
                     new_function.is_duplicate = True
                     new_function.dedup_level = dedup_result.level_caught
                     new_function.dedup_time_ms = round(
                         (dedup_result.time_level0 + dedup_result.time_level1 + dedup_result.time_level2) * 1000, 2)
                     profiler.register_function(new_function)
-                return  # 跳过后续所有 Sandbox 评估
-        # ========== 去重检查结束 ==========
+                return  # Skip all subsequent Sandbox evaluation
+        # ========== End of dedup check ==========
 
-        # Phase 2: 去重通过，设置默认字段
+        # Phase 2: Dedup passed, set default fields
         if self._dedup_filter is not None:
             new_function.is_duplicate = False
             new_function.dedup_level = None

@@ -75,7 +75,7 @@ def main(
     else:
         profiler = profile.Profiler(log_dir)
 
-    # Phase 2: 创建去重过滤器（如果配置了 dedup）
+    # Phase 2: Create dedup filter (if dedup is configured)
     dedup_filter = None
     if config.dedup is not None:
         try:
@@ -85,9 +85,9 @@ def main(
                 template_str=str(template),
                 function_to_evolve=function_to_evolve,
             )
-            print(f"[FunSearch] Phase 2 行为去重已启用")
+            print(f"[FunSearch] Phase 2 behavioral dedup enabled")
         except ImportError as e:
-            print(f"[FunSearch] 去重模块导入失败，将跳过去重: {e}")
+            print(f"[FunSearch] Failed to import dedup module, skipping dedup: {e}")
 
     evaluators = []
     for _ in range(config.num_evaluators):
@@ -116,6 +116,6 @@ def main(
     for s in samplers:
         s.sample(profiler=profiler)
 
-    # Phase 2: 搜索结束后打印去重统计报告
+    # Phase 2: Print dedup statistics report after search completes
     if profiler and hasattr(profiler, 'has_dedup_data') and profiler.has_dedup_data:
         print("\n" + profiler.dedup_summary())

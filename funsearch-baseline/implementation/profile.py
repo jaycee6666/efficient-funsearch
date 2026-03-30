@@ -8,7 +8,7 @@ from typing import List, Dict
 import logging
 import json
 from implementation import code_manipulation
-from tensorboardX import SummaryWriter  # 用 tensorboardX 替代 torch.utils.tensorboard，避免安装大型 torch 依赖
+from tensorboardX import SummaryWriter  # Use tensorboardX instead of torch.utils.tensorboard to avoid large torch dependency
 
 
 class Profiler:
@@ -48,7 +48,7 @@ class Profiler:
         self._each_sample_tot_sample_time = []
         self._each_sample_tot_evaluate_time = []
 
-        # Phase 2: 去重统计
+        # Phase 2: Dedup statistics
         self._total_dedup_checks = 0
         self._dedup_filtered = 0
         self._dedup_by_level = {0: 0, 1: 0, 2: 0}
@@ -87,7 +87,7 @@ class Profiler:
         content = {
             'sample_order': sample_order,
             'function': function_str,
-            # 记录更多字段，方便后续分析行为去重效果
+            # Record additional fields for later behavioral dedup analysis
             'function_body': programs.body if hasattr(programs, 'body') else None,
             'score': score,
             'sample_time': programs.sample_time if hasattr(programs, 'sample_time') else None,
@@ -108,7 +108,7 @@ class Profiler:
             self._record_and_verbose(sample_orders)
             self._write_tensorboard()
             self._write_json(programs)
-            # 追加 CSV 日志，方便 pandas 一行读取所有数据
+            # Append CSV log for easy pandas one-line loading
             csv_path = os.path.join(self._log_dir, 'run_log.csv')
             write_header = not os.path.exists(csv_path)
             with open(csv_path, 'a') as f:
@@ -117,7 +117,7 @@ class Profiler:
                 sample_time = programs.sample_time if hasattr(programs, 'sample_time') else ''
                 evaluate_time = programs.evaluate_time if hasattr(programs, 'evaluate_time') else ''
                 score_val = programs.score if programs.score is not None else ''
-                # Phase 2: 去重相关字段
+                # Phase 2: Dedup-related fields
                 is_dup = getattr(programs, 'is_duplicate', '')
                 dedup_level = getattr(programs, 'dedup_level', '')
                 dedup_time = getattr(programs, 'dedup_time_ms', '')
@@ -166,16 +166,16 @@ class Profiler:
 
     @property
     def has_dedup_data(self) -> bool:
-        """是否有去重数据可供报告。"""
+        """Whether there is dedup data available for reporting."""
         return self._total_dedup_checks > 0
 
-    # ===== Phase 2: 去重日志 =====
+    # ===== Phase 2: Dedup logging =====
 
     def register_dedup_event(self, dedup_result, **kwargs):
-        """记录一次去重检查事件（回应助教 #5: 开销报告）。
+        """Record a dedup check event (addressing TA feedback #5: overhead report).
 
         Args:
-            dedup_result: DedupResult 实例
+            dedup_result: DedupResult instance
         """
         self._total_dedup_checks += 1
         self._dedup_time_level0 += dedup_result.time_level0
@@ -189,7 +189,7 @@ class Profiler:
                     self._dedup_by_level.get(dedup_result.level_caught, 0) + 1
                 )
 
-        # TensorBoard 日志
+        # TensorBoard logging
         if self._log_dir and hasattr(self, '_writer'):
             self._writer.add_scalar(
                 'Dedup/filtered_total', self._dedup_filtered,
@@ -201,10 +201,10 @@ class Profiler:
                     global_step=self._total_dedup_checks)
 
     def dedup_summary(self, avg_eval_time: float = 4.14) -> str:
-        """生成去重统计报告（回应助教 #5: 开销报告格式）。
+        """Generate dedup statistics report (addressing TA feedback #5: overhead report format).
 
         Args:
-            avg_eval_time: 平均单次评估时间（秒），用于计算节省时间
+            avg_eval_time: Average single evaluation time (seconds), used to compute time saved
         """
         passed = self._total_dedup_checks - self._dedup_filtered
         total_dedup_time = (self._dedup_time_level0
@@ -213,22 +213,22 @@ class Profiler:
         saved_time = self._dedup_filtered * avg_eval_time
         net_saving = saved_time - total_dedup_time
 
-        # 计算各级平均耗时
+        # Compute average time per level
         n = max(self._total_dedup_checks, 1)
         avg_l0 = self._dedup_time_level0 / n * 1000
         avg_l1 = self._dedup_time_level1 / n * 1000
         avg_l2 = self._dedup_time_level2 / n * 1000
 
         report = (
-            f"去重统计报告:\n"
-            f"  总检查: {self._total_dedup_checks}  |  "
-            f"L0过滤: {self._dedup_by_level.get(0, 0)}  |  "
-            f"L1过滤: {self._dedup_by_level.get(1, 0)}  |  "
-            f"L2过滤: {self._dedup_by_level.get(2, 0)}  |  "
-            f"通过: {passed}\n"
-            f"  各级均耗时: L0={avg_l0:.1f}ms  L1={avg_l1:.1f}ms  L2={avg_l2:.1f}ms\n"
-            f"  节省评估时间: {self._dedup_filtered} × {avg_eval_time:.2f}s = {saved_time:.1f}s\n"
-            f"  去重总开销: {self._total_dedup_checks} × {total_dedup_time / n * 1000:.1f}ms = {total_dedup_time:.2f}s\n"
-            f"  净节省: {net_saving:.1f}s"
+            f"Dedup Statistics Report:\n"
+            f"  Total checks: {self._total_dedup_checks}  |  "
+            f"L0 filtered: {self._dedup_by_level.get(0, 0)}  |  "
+            f"L1 filtered: {self._dedup_by_level.get(1, 0)}  |  "
+            f"L2 filtered: {self._dedup_by_level.get(2, 0)}  |  "
+            f"Passed: {passed}\n"
+            f"  Avg time per level: L0={avg_l0:.1f}ms  L1={avg_l1:.1f}ms  L2={avg_l2:.1f}ms\n"
+            f"  Eval time saved: {self._dedup_filtered} x {avg_eval_time:.2f}s = {saved_time:.1f}s\n"
+            f"  Dedup total overhead: {self._total_dedup_checks} x {total_dedup_time / n * 1000:.1f}ms = {total_dedup_time:.2f}s\n"
+            f"  Net saving: {net_saving:.1f}s"
         )
         return report

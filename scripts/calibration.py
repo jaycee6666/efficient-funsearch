@@ -1,14 +1,14 @@
-"""阈值校准实验：相似度 vs 分数差散点图（回应助教 #4）。
+"""Threshold calibration experiment: similarity vs score difference scatter plot (addressing TA feedback #4).
 
-用法:
-    python scripts/calibration.py --samples-dir <samples目录>
+Usage:
+    python scripts/calibration.py --samples-dir <samples_directory>
 
-流程:
-    1. 加载 baseline 程序（从 samples_*.json 中提取 function 字段）
-    2. 对每个程序运行 8 个 probe → 指纹向量
-    3. 计算 C(n,2) 对的余弦相似度和分数差
-    4. 输出散点图: x=余弦相似度, y=|分数差|
-    5. 验证 0.98 阈值: 高相似度区域分数差应接近 0
+Workflow:
+    1. Load baseline programs (extract the function field from samples_*.json)
+    2. Run 8 probes on each program -> fingerprint vector
+    3. Compute cosine similarity and score difference for all C(n,2) pairs
+    4. Output scatter plot: x=cosine similarity, y=|score difference|
+    5. Validate 0.98 threshold: score differences in the high similarity region should be near 0
 """
 
 from __future__ import annotations
@@ -22,14 +22,14 @@ from itertools import combinations
 
 import numpy as np
 
-# 将仓库根目录加入 sys.path
+# Add repository root to sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from src.dedup.probing import compute_fingerprint, PROBING_INSTANCES
 
 
 def load_samples(samples_dir: str) -> list[dict]:
-    """从 samples_*.json 文件加载程序和分数。"""
+    """Load programs and scores from samples_*.json files."""
     pattern = os.path.join(samples_dir, 'samples_*.json')
     files = sorted(glob.glob(pattern))
     samples = []
@@ -46,22 +46,22 @@ def load_samples(samples_dir: str) -> list[dict]:
 
 
 def extract_program_str(function_str: str) -> str:
-    """从 function 字符串构建可执行的完整程序（包含 numpy import）。"""
+    """Build an executable program from a function string (including numpy import)."""
     return f"import numpy as np\n\n{function_str}\n"
 
 
 def main():
-    parser = argparse.ArgumentParser(description='阈值校准实验')
+    parser = argparse.ArgumentParser(description='Threshold calibration experiment')
     parser.add_argument(
         '--samples-dir',
         default=None,
-        help='samples_*.json 文件所在目录',
+        help='Directory containing samples_*.json files',
     )
-    parser.add_argument('--threshold', type=float, default=0.98, help='余弦相似度阈值')
-    parser.add_argument('--output', default='calibration_plot.png', help='输出图片路径')
+    parser.add_argument('--threshold', type=float, default=0.98, help='Cosine similarity threshold')
+    parser.add_argument('--output', default='calibration_plot.png', help='Output image path')
     args = parser.parse_args()
 
-    # 未指定时，按优先级尝试常见位置
+    # If not specified, try common locations in priority order
     if args.samples_dir is None:
         candidates = [
             os.path.join(os.path.dirname(__file__), '..',
@@ -74,18 +74,18 @@ def main():
                 args.samples_dir = c
                 break
         if args.samples_dir is None:
-            print("找不到默认样本目录，请用 --samples-dir 指定")
+            print("Cannot find default samples directory, please specify with --samples-dir")
             return
 
-    print(f"加载样本: {args.samples_dir}")
+    print(f"Loading samples: {args.samples_dir}")
     samples = load_samples(args.samples_dir)
-    print(f"已加载 {len(samples)} 个有效样本")
+    print(f"Loaded {len(samples)} valid samples")
 
     if len(samples) < 2:
-        print("样本数不足，至少需要 2 个")
+        print("Insufficient samples, at least 2 are required")
         return
 
-    # 计算每个程序的行为指纹
+    # Compute behavioral fingerprint for each program
     fingerprints = []
     valid_samples = []
     for s in samples:
@@ -95,11 +95,11 @@ def main():
             fingerprints.append(fp)
             valid_samples.append(s)
         else:
-            print(f"  样本 {s['sample_order']} 指纹计算失败，跳过")
+            print(f"  Sample {s['sample_order']} fingerprint computation failed, skipping")
 
-    print(f"成功计算指纹: {len(fingerprints)}/{len(samples)}")
+    print(f"Successfully computed fingerprints: {len(fingerprints)}/{len(samples)}")
 
-    # 转为归一化向量
+    # Convert to normalized vectors
     vectors = []
     for fp in fingerprints:
         vec = np.array(fp, dtype=np.float64)
@@ -109,7 +109,7 @@ def main():
         vectors.append(vec)
     vectors = np.array(vectors)
 
-    # 计算所有对的余弦相似度和分数差
+    # Compute cosine similarity and score difference for all pairs
     n = len(valid_samples)
     similarities = []
     score_diffs = []
@@ -122,21 +122,21 @@ def main():
     similarities = np.array(similarities)
     score_diffs = np.array(score_diffs)
 
-    print(f"\n总配对数: {len(similarities)}")
-    print(f"相似度范围: [{similarities.min():.4f}, {similarities.max():.4f}]")
-    print(f"分数差范围: [{score_diffs.min():.2f}, {score_diffs.max():.2f}]")
+    print(f"\nTotal pairs: {len(similarities)}")
+    print(f"Similarity range: [{similarities.min():.4f}, {similarities.max():.4f}]")
+    print(f"Score diff range: [{score_diffs.min():.2f}, {score_diffs.max():.2f}]")
 
-    # 分析阈值效果
+    # Analyze threshold effectiveness
     above_threshold = similarities >= args.threshold
     n_above = above_threshold.sum()
-    print(f"\n阈值 {args.threshold} 分析:")
-    print(f"  超过阈值的配对数: {n_above}/{len(similarities)}")
+    print(f"\nThreshold {args.threshold} analysis:")
+    print(f"  Pairs above threshold: {n_above}/{len(similarities)}")
     if n_above > 0:
         diffs_above = score_diffs[above_threshold]
-        print(f"  这些配对的分数差: mean={diffs_above.mean():.2f}, max={diffs_above.max():.2f}")
-        print(f"  分数差=0 的比例: {(diffs_above == 0).sum()}/{n_above}")
+        print(f"  Score diffs for these pairs: mean={diffs_above.mean():.2f}, max={diffs_above.max():.2f}")
+        print(f"  Proportion with score diff=0: {(diffs_above == 0).sum()}/{n_above}")
 
-    # 尝试绘制散点图
+    # Try to plot scatter chart
     try:
         import matplotlib
         matplotlib.use('Agg')
@@ -152,9 +152,9 @@ def main():
         ax.legend()
         plt.tight_layout()
         plt.savefig(args.output, dpi=150)
-        print(f"\n散点图已保存: {args.output}")
+        print(f"\nScatter plot saved: {args.output}")
     except ImportError:
-        print("\n[提示] 未安装 matplotlib，跳过散点图绘制。安装后重新运行: pip install matplotlib")
+        print("\n[Note] matplotlib is not installed, skipping scatter plot. Install and re-run: pip install matplotlib")
 
 
 if __name__ == '__main__':

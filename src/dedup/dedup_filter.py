@@ -1,8 +1,8 @@
-"""DedupFilter 核心类 — 三级过滤漏斗检测功能重复的程序。
+"""DedupFilter core class — three-level filter funnel to detect functionally duplicate programs.
 
-Level 0: 代码规范化 + AST Hash（<1ms，捕获变量名/注释差异）
-Level 1: 行为指纹精确匹配（<1ms，捕获功能等价）
-Level 2: 余弦相似度近似匹配（<5ms，捕获近似等价）
+Level 0: Code normalization + AST Hash (<1ms, catches variable name/comment differences)
+Level 1: Behavioral fingerprint exact match (<1ms, catches functional equivalence)
+Level 2: Cosine similarity approximate match (<5ms, catches near-equivalence)
 """
 
 from __future__ import annotations
@@ -20,20 +20,20 @@ from src.normalizer.ast_normalizer import ProgramNormalizer
 
 @dataclasses.dataclass
 class DedupResult:
-    """单次去重检查的结果。"""
+    """Result of a single dedup check."""
     is_duplicate: bool
-    level_caught: int | None       # 被哪一级捕获：0, 1, 2 或 None（未判重）
-    time_level0: float             # Level 0 耗时（秒）
-    time_level1: float             # Level 1 耗时（秒）
-    time_level2: float             # Level 2 耗时（秒）
-    fingerprint: tuple | None      # 行为指纹（用于 Level 2 存储）
-    is_validation_pass: bool       # 是否为验证样本（即使命中也强制放行）
+    level_caught: int | None       # Which level caught it: 0, 1, 2, or None (not flagged as duplicate)
+    time_level0: float             # Level 0 elapsed time (seconds)
+    time_level1: float             # Level 1 elapsed time (seconds)
+    time_level2: float             # Level 2 elapsed time (seconds)
+    fingerprint: tuple | None      # Behavioral fingerprint (used for Level 2 storage)
+    is_validation_pass: bool       # Whether this is a validation sample (force-passed even if caught)
 
 
 class DedupFilter:
-    """三级去重过滤器。
+    """Three-level dedup filter.
 
-    在 Sandbox 评估之前快速检测功能重复的程序，节省昂贵的评估时间。
+    Quickly detects functionally duplicate programs before Sandbox evaluation, saving expensive evaluation time.
     """
 
     def __init__(
@@ -44,36 +44,36 @@ class DedupFilter:
     ):
         """
         Args:
-            config: 去重配置
-            template_str: 程序模板字符串（用于拼接完整程序以执行探针）
-            function_to_evolve: 被进化的函数名（如 'priority'）
+            config: Dedup configuration
+            template_str: Program template string (used to compose the full program for probe execution)
+            function_to_evolve: Name of the function being evolved (e.g. 'priority')
         """
         self._config = config
         self._template_str = template_str
         self._function_to_evolve = function_to_evolve
         self._normalizer = ProgramNormalizer()
 
-        # Level 0: AST Hash 集合
+        # Level 0: AST Hash set
         self._code_hash_set: set[str] = set()
 
-        # Level 1: 行为指纹 Hash 集合（精确匹配，零误报）
+        # Level 1: Behavioral fingerprint Hash set (exact match, zero false positives)
         self._fingerprint_hash_set: set[str] = set()
 
-        # Level 2: 指纹向量矩阵（用于余弦相似度）
+        # Level 2: Fingerprint vector matrix (for cosine similarity)
         self._fingerprint_vectors: list[np.ndarray] = []
 
-        # 统计计数器
+        # Statistics counter
         self._total_checks = 0
 
     def check(self, program_str: str, function_body: str) -> DedupResult:
-        """对一个候选程序执行三级去重检查。
+        """Perform three-level dedup check on a candidate program.
 
         Args:
-            program_str: 完整可执行的程序字符串
-            function_body: 进化函数的函数体（用于 Level 0 规范化）
+            program_str: Complete executable program string
+            function_body: Function body of the evolved function (used for Level 0 normalization)
 
         Returns:
-            DedupResult 记录本次检查的结果和各级耗时
+            DedupResult recording the check result and per-level elapsed time
         """
         if not self._config.enabled:
             return DedupResult(
@@ -84,7 +84,7 @@ class DedupFilter:
 
         self._total_checks += 1
 
-        # 判断是否为验证样本（每 N 次强制放行，用于统计误报率）
+        # Determine if this is a validation sample (force-pass every N checks for false positive rate tracking)
         is_validation = (
             self._config.validation_interval > 0
             and self._total_checks % self._config.validation_interval == 0
@@ -94,7 +94,7 @@ class DedupFilter:
         fingerprint = None
         caught_l0 = caught_l1 = caught_l2 = False
 
-        # ===== Level 0: 代码规范化 + AST Hash =====
+        # ===== Level 0: Code normalization + AST Hash =====
         if self._config.level0_enabled:
             t0 = time.perf_counter()
             caught_l0 = self._check_level0(function_body)
@@ -106,7 +106,7 @@ class DedupFilter:
                     fingerprint=None, is_validation_pass=False,
                 )
 
-        # ===== Level 1: 行为指纹精确匹配 =====
+        # ===== Level 1: Behavioral fingerprint exact match =====
         if self._config.level1_enabled:
             t1 = time.perf_counter()
             fingerprint = compute_fingerprint(
@@ -125,7 +125,7 @@ class DedupFilter:
             else:
                 time_l1 = time.perf_counter() - t1
 
-        # ===== Level 2: 余弦相似度近似匹配 =====
+        # ===== Level 2: Cosine similarity approximate match =====
         if self._config.level2_enabled and fingerprint is not None:
             t2 = time.perf_counter()
             caught_l2 = self._check_level2(fingerprint)
@@ -137,14 +137,14 @@ class DedupFilter:
                     fingerprint=fingerprint, is_validation_pass=False,
                 )
 
-        # ===== 判断是否被任何级别捕获 =====
+        # ===== Determine if caught by any level =====
         was_caught = caught_l0 or caught_l1 or caught_l2
 
-        # 只有真正的新程序才注册（避免验证样本重复注册导致自我匹配）
+        # Only register truly new programs (avoid validation samples re-registering and causing self-matches)
         if not was_caught:
             self._register(function_body, fingerprint)
 
-        # 推导 level_caught（验证样本用，记录"本应被哪级捕获"）
+        # Derive level_caught (for validation samples, records "which level would have caught it")
         level_caught = None
         if was_caught:
             level_caught = 0 if caught_l0 else (1 if caught_l1 else 2)
@@ -158,23 +158,23 @@ class DedupFilter:
         )
 
     # ------------------------------------------------------------------
-    # Level 0: 代码规范化 + AST Hash
+    # Level 0: Code normalization + AST Hash
     # ------------------------------------------------------------------
 
     def _check_level0(self, function_body: str) -> bool:
-        """检查代码 AST Hash 是否已存在。"""
+        """Check if the code's AST Hash already exists."""
         ast_hash = self._compute_ast_hash(function_body)
         if ast_hash is None:
-            return False  # 语法错误，跳过此级
+            return False  # Syntax error, skip this level
         return ast_hash in self._code_hash_set
 
     def _compute_ast_hash(self, function_body: str) -> str | None:
-        """将函数体包装为完整函数后计算 AST Hash。"""
+        """Wrap function body into a complete function definition and compute AST Hash."""
         try:
-            # 包装为完整函数定义，ProgramNormalizer 需要合法的 Python 代码
-            # 注意：硬编码了 (item, bins) 参数名。AST 规范化会忽略类型注解，
-            # 所以不需要写 (item: float, bins: np.ndarray)。
-            # 如果未来函数签名参数名变化，需同步修改此处。
+            # Wrap as complete function definition; ProgramNormalizer requires valid Python code.
+            # Note: (item, bins) parameter names are hardcoded. AST normalization ignores type
+            # annotations, so no need to write (item: float, bins: np.ndarray).
+            # If the function signature parameter names change in the future, update this accordingly.
             wrapped = f"def {self._function_to_evolve}(item, bins):\n{function_body}"
             normalized = self._normalizer.normalize(wrapped)
             return normalized.ast_hash
@@ -182,36 +182,36 @@ class DedupFilter:
             return None
 
     # ------------------------------------------------------------------
-    # Level 1: 行为指纹精确匹配
+    # Level 1: Behavioral fingerprint exact match
     # ------------------------------------------------------------------
 
     def _check_level1(self, fingerprint: tuple[int, ...]) -> bool:
-        """检查指纹 Hash 是否已存在（O(1) 查找，零误报）。"""
+        """Check if fingerprint Hash already exists (O(1) lookup, zero false positives)."""
         fp_hash = self._hash_fingerprint(fingerprint)
         return fp_hash in self._fingerprint_hash_set
 
     @staticmethod
     def _hash_fingerprint(fingerprint: tuple[int, ...]) -> str:
-        """将指纹元组转为 SHA256 Hash 字符串。"""
+        """Convert fingerprint tuple to SHA256 Hash string."""
         return hashlib.sha256(str(fingerprint).encode()).hexdigest()
 
     # ------------------------------------------------------------------
-    # Level 2: 余弦相似度近似匹配
+    # Level 2: Cosine similarity approximate match
     # ------------------------------------------------------------------
 
     def _check_level2(self, fingerprint: tuple[int, ...]) -> bool:
-        """检查指纹向量与已存向量的最大余弦相似度是否超过阈值。"""
+        """Check if the max cosine similarity between this fingerprint vector and stored vectors exceeds the threshold."""
         if not self._fingerprint_vectors:
             return False
         vec = self._fingerprint_to_vector(fingerprint)
-        # 矩阵乘法计算余弦相似度（所有向量已 L2 归一化）
+        # Matrix multiplication to compute cosine similarity (all vectors are L2-normalized)
         matrix = np.array(self._fingerprint_vectors)
         similarities = matrix @ vec
         return float(np.max(similarities)) >= self._config.cosine_threshold
 
     @staticmethod
     def _fingerprint_to_vector(fingerprint: tuple[int, ...]) -> np.ndarray:
-        """将指纹元组转为 L2 归一化的浮点向量。"""
+        """Convert fingerprint tuple to an L2-normalized float vector."""
         vec = np.array(fingerprint, dtype=np.float64)
         norm = np.linalg.norm(vec)
         if norm > 0:
@@ -219,17 +219,17 @@ class DedupFilter:
         return vec
 
     # ------------------------------------------------------------------
-    # 注册新程序（通过所有级别后调用）
+    # Register new program (called after passing all levels)
     # ------------------------------------------------------------------
 
     def _register(self, function_body: str, fingerprint: tuple[int, ...] | None) -> None:
-        """将新程序注册到各级索引中。"""
-        # Level 0: 注册 AST Hash
+        """Register a new program into the indexes at each level."""
+        # Level 0: Register AST Hash
         ast_hash = self._compute_ast_hash(function_body)
         if ast_hash is not None:
             self._code_hash_set.add(ast_hash)
 
-        # Level 1 & 2: 注册指纹
+        # Level 1 & 2: Register fingerprint
         if fingerprint is not None:
             fp_hash = self._hash_fingerprint(fingerprint)
             self._fingerprint_hash_set.add(fp_hash)

@@ -57,7 +57,7 @@ class Config:
           can execute in parallel as part of a distributed system.
       samples_per_prompt: How many independently sampled program continuations to
           obtain for each prompt.
-      dedup: Phase 2 去重配置（None 表示不启用去重）
+      dedup: Phase 2 dedup configuration (None means dedup is disabled)
     """
     programs_database: ProgramsDatabaseConfig = dataclasses.field(default_factory=ProgramsDatabaseConfig)
     num_samplers: int = 1  # RZ: I just use one samplers
@@ -65,7 +65,7 @@ class Config:
     num_evaluators: int = 1  # RZ: I just use one evaluators
     samples_per_prompt: int = 4
     evaluate_timeout_seconds: int = 30  # RZ: add timeout seconds
-    dedup: Any = None  # Phase 2: DedupConfig 实例或 None
+    dedup: Any = None  # Phase 2: DedupConfig instance or None
 
 
 @dataclasses.dataclass()

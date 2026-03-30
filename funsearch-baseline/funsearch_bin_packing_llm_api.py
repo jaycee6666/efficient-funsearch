@@ -12,7 +12,7 @@ from implementation import evaluator
 from implementation import code_manipulation
 import bin_packing_utils
 
-# Phase 2: 将仓库根目录加入 sys.path，以便 import src.dedup
+# Phase 2: Add repo root to sys.path so we can import src.dedup
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 
@@ -73,14 +73,14 @@ class LLMAPI(sampler.LLM):
         prompt = '\n'.join([content, self._additional_prompt])
         while True:
             try:
-                # 从环境变量读取 API 配置，方便切换不同服务商
+                # Read API config from environment variables for easy provider switching
                 api_base = os.environ.get('API_BASE', 'api.bltcy.ai')
-                api_key = os.environ['API_KEY']  # 必须设置，否则直接报错
+                api_key = os.environ['API_KEY']  # Must be set, otherwise raise error
                 api_model = os.environ.get('API_MODEL', 'gpt-5-nano')
 
                 conn = http.client.HTTPSConnection(api_base)
                 payload = json.dumps({
-                    "max_tokens": 4096,  # 推理模型需要大量 token 先"思考"，512 不够
+                    "max_tokens": 4096,  # Reasoning models need many tokens to "think" first; 512 is insufficient
                     "model": api_model,
                     "messages": [
                         {
@@ -103,7 +103,7 @@ class LLMAPI(sampler.LLM):
                     continue
                 response = data['choices'][0]['message']['content']
 
-                # 保存原始 LLM 输出，trim 之前存档，方便诊断 trim 问题
+                # Save raw LLM output before trimming, for debugging trim issues
                 raw_dir = os.path.join('logs', 'raw_llm_outputs')
                 os.makedirs(raw_dir, exist_ok=True)
                 raw_count = len(os.listdir(raw_dir))
@@ -127,7 +127,7 @@ class Sandbox(evaluator.Sandbox):
     2) stops the execution of the code in time (avoid endless loop).
     """
 
-    def __init__(self, verbose=False, numba_accelerate=False):  # numba 未安装，禁用加速
+    def __init__(self, verbose=False, numba_accelerate=False):  # numba not installed, disable acceleration
         """
         Args:
             verbose         : Print evaluate information.
@@ -287,7 +287,7 @@ def priority(item: float, bins: np.ndarray) -> np.ndarray:
 # It should be noted that the if __name__ == '__main__' is required.
 # Because the inner code uses multiprocess evaluation.
 if __name__ == '__main__':
-    # Phase 2: 导入去重配置（可通过环境变量 DEDUP_ENABLED=0 关闭）
+    # Phase 2: Import dedup config (can be disabled via env var DEDUP_ENABLED=0)
     dedup_config = None
     if os.environ.get('DEDUP_ENABLED', '1') != '0':
         try:
@@ -300,11 +300,11 @@ if __name__ == '__main__':
     config = config.Config(
         samples_per_prompt=4,
         evaluate_timeout_seconds=30,
-        dedup=dedup_config,  # Phase 2: 传入去重配置
+        dedup=dedup_config,  # Phase 2: Pass dedup config
     )
 
     bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
-    # --- 15 样本小规模验证（已通过，Round 2 去重率 50%，best=-232.95） ---
+    # --- 15-sample small-scale validation (passed, Round 2 dedup rate 50%, best=-232.95) ---
     # global_max_sample_num = 16
     # funsearch.main(
     #     specification=specification,
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     #     log_dir='logs/dedup_15samples_v2',
     # )
 
-    global_max_sample_num = 51  # 计数器从1起，设51可实际生成50个LLM样本
+    global_max_sample_num = 51  # Counter starts from 1, so set 51 to actually generate 50 LLM samples
     funsearch.main(
         specification=specification,
         inputs=bin_packing_or3,

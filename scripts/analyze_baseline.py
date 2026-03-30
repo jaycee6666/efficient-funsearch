@@ -12,17 +12,17 @@ import numpy as np
 import pandas as pd
 
 
-# 日志目录默认值；可通过 --log-dir 参数覆盖
+# Default log directory; can be overridden via --log-dir argument
 _DEFAULT_LOG_DIR = "logs/baseline_50samples"
 
 
 def load_json_samples(samples_dir: str) -> list[dict]:
-    """从 samples/ 目录加载所有 per-sample JSON 文件。"""
+    """Load all per-sample JSON files from the samples/ directory."""
     pattern = os.path.join(samples_dir, "samples_*.json")
     files = sorted(glob.glob(pattern))
 
     if not files:
-        print(f"[警告] 未找到 JSON 样本文件：{pattern}")
+        print(f"[WARNING] No JSON sample files found: {pattern}")
         return []
 
     samples = []
@@ -30,35 +30,35 @@ def load_json_samples(samples_dir: str) -> list[dict]:
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 支持单个 dict 或 list of dicts
+                # Support both single dict and list of dicts
                 if isinstance(data, list):
                     samples.extend(data)
                 elif isinstance(data, dict):
                     samples.append(data)
         except (json.JSONDecodeError, OSError) as e:
-            print(f"[警告] 无法读取 {fpath}：{e}")
+            print(f"[WARNING] Cannot read {fpath}: {e}")
 
     return samples
 
 
 def compute_stats(samples: list[dict]) -> dict:
     """
-    计算核心统计指标。
+    Compute core statistical metrics.
 
-    参数说明：
-    - samples: 从 JSON 加载的样本列表，每个样本含 score、sample_time、evaluate_time 等字段
+    Args:
+    - samples: List of samples loaded from JSON, each containing score, sample_time, evaluate_time, etc.
     """
     total = len(samples)
 
-    # --- 1. 过滤有效（score 非 null）样本 ---
+    # --- 1. Filter valid samples (score is not null) ---
     successful = [s for s in samples if s.get("score") is not None]
     n_success = len(successful)
-    # 成功率 = 成功评估的样本数 / 总样本数
+    # success_rate = number of successfully evaluated samples / total samples
     success_rate = round(n_success / total, 2) if total > 0 else 0.0
 
     scores = [s["score"] for s in successful]
 
-    # --- 2. Score 统计 ---
+    # --- 2. Score statistics ---
     if scores:
         arr = np.array(scores, dtype=float)
         best_score = float(np.max(arr))
@@ -70,16 +70,16 @@ def compute_stats(samples: list[dict]) -> dict:
     else:
         best_score = mean_score = std_score = min_score = max_score = median_score = 0.0
 
-    # --- 3. 自然去重率（natural deduplication rate）---
-    # unique_score_count：成功样本中不同 score 值的数量
-    # natural_dup_rate = 1 - (unique / successful)，越高说明重复越多
+    # --- 3. Natural deduplication rate ---
+    # unique_score_count: number of distinct score values among successful samples
+    # natural_dup_rate = 1 - (unique / successful), higher means more redundancy
     unique_scores = set(scores)
     unique_score_count = len(unique_scores)
     natural_dup_rate = (
         round(1.0 - unique_score_count / n_success, 2) if n_success > 0 else 0.0
     )
 
-    # --- 4. 时间统计（过滤 null 值）---
+    # --- 4. Time statistics (filter out null values) ---
     sample_times = [
         s["sample_time"] for s in samples if s.get("sample_time") is not None
     ]
@@ -89,8 +89,8 @@ def compute_stats(samples: list[dict]) -> dict:
     avg_sample_time = float(np.mean(sample_times)) if sample_times else 0.0
     avg_eval_time = float(np.mean(eval_times)) if eval_times else 0.0
 
-    # --- 5. 收敛曲线（convergence curve）---
-    # 按 sample_order 排序，记录每一步的历史最优 score
+    # --- 5. Convergence curve ---
+    # Sort by sample_order, track the running best score at each step
     ordered = sorted(
         [s for s in samples if s.get("score") is not None],
         key=lambda x: x.get("sample_order", 0),
@@ -124,7 +124,7 @@ def main():
     parser.add_argument(
         "--log-dir",
         default=_DEFAULT_LOG_DIR,
-        help=f"日志目录路径（默认：{_DEFAULT_LOG_DIR}）",
+        help=f"Log directory path (default: {_DEFAULT_LOG_DIR})",
     )
     args = parser.parse_args()
 
@@ -134,40 +134,40 @@ def main():
     OUTPUT_PATH = os.path.join(LOG_DIR, "summary.json")
 
     if not os.path.isdir(LOG_DIR):
-        print(f"[错误] 找不到日志目录：{LOG_DIR}")
-        print(f"用法：python scripts/analyze_baseline.py --log-dir <路径>")
+        print(f"[ERROR] Cannot find log directory: {LOG_DIR}")
+        print(f"Usage: python scripts/analyze_baseline.py --log-dir <path>")
         sys.exit(1)
 
-    # --- 加载 JSON 样本 ---
+    # --- Load JSON samples ---
     samples = load_json_samples(SAMPLES_DIR)
 
-    # --- 如果 JSON 样本为空，尝试从 CSV 加载 ---
+    # --- If JSON samples are empty, try loading from CSV ---
     if not samples:
         if not os.path.isfile(CSV_PATH):
-            print(f"[错误] JSON 样本和 CSV 均不存在：{CSV_PATH}")
+            print(f"[ERROR] Neither JSON samples nor CSV exist: {CSV_PATH}")
             sys.exit(1)
-        print(f"[信息] JSON 样本为空，改从 CSV 加载：{CSV_PATH}")
+        print(f"[INFO] JSON samples are empty, loading from CSV instead: {CSV_PATH}")
         try:
             df = pd.read_csv(CSV_PATH)
         except Exception as e:
-            print(f"[错误] 无法读取 CSV：{e}")
+            print(f"[ERROR] Cannot read CSV: {e}")
             sys.exit(1)
-        # 将 CSV 行转为与 JSON 样本一致的 dict 格式
+        # Convert CSV rows to dict format consistent with JSON samples
         samples = df.to_dict(orient="records")
         for s in samples:
-            # pandas 读取时 NaN 转为 None，方便后续统一处理
+            # Convert NaN to None for consistent downstream handling
             for key in ("score", "sample_time", "evaluate_time"):
                 if key in s and (s[key] != s[key]):  # NaN check
                     s[key] = None
 
     if not samples:
-        print("[错误] 没有任何可分析的样本数据，退出。")
+        print("[ERROR] No sample data available for analysis, exiting.")
         sys.exit(1)
 
-    # --- 计算统计 ---
+    # --- Compute statistics ---
     stats = compute_stats(samples)
 
-    # --- 构建输出 JSON ---
+    # --- Build output JSON ---
     summary = {
         "run_config": {
             "max_samples": 50,
@@ -190,13 +190,13 @@ def main():
         "convergence_curve": stats["convergence_curve"],
     }
 
-    # --- 写入 JSON ---
+    # --- Write JSON ---
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
-    print(f"[完成] 摘要已保存至：{OUTPUT_PATH}")
+    print(f"[DONE] Summary saved to: {OUTPUT_PATH}")
 
-    # --- 打印人类可读摘要 ---
+    # --- Print human-readable summary ---
     r = summary["results"]
     print("\n========== Baseline Experiment Summary ==========")
     print(f"  Date          : {summary['run_config']['date']}")
@@ -207,7 +207,7 @@ def main():
     print(f"  Best score    : {r['best_score']}")
     print(f"  Mean ± Std    : {r['mean_score']} ± {r['std_score']}")
     print(f"  Unique scores : {r['unique_score_count']}")
-    # natural_dup_rate 越高说明重复越严重，是 FunSearch 去重优化的动机
+    # Higher natural_dup_rate means more redundancy, motivating FunSearch dedup optimization
     print(f"  Natural dup rate: {r['natural_dup_rate']:.0%}  (higher = more redundancy)")
     print(f"  Avg sample time : {r['avg_sample_time_sec']} s")
     print(f"  Avg eval time   : {r['avg_eval_time_sec']} s")
