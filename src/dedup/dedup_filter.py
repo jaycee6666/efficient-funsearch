@@ -14,7 +14,7 @@ import time
 import numpy as np
 
 from src.dedup.dedup_config import DedupConfig
-from src.dedup.probing import compute_fingerprint, PROBING_INSTANCES
+from src.dedup.probing import compute_fingerprint
 from src.normalizer.ast_normalizer import ProgramNormalizer
 
 

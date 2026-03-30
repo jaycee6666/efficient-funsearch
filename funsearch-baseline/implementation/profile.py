@@ -3,12 +3,15 @@
 
 from __future__ import annotations
 
-import os.path
-from typing import List, Dict
-import logging
 import json
+import logging
+import os.path
+from typing import Dict
+
 from implementation import code_manipulation
-from tensorboardX import SummaryWriter  # Use tensorboardX instead of torch.utils.tensorboard to avoid large torch dependency
+from tensorboardX import (
+    SummaryWriter,  # Use tensorboardX instead of torch.utils.tensorboard to avoid large torch dependency
+)
 
 
 class Profiler:
@@ -132,14 +135,14 @@ class Profiler:
         evaluate_time = function.evaluate_time
         score = function.score
         # log attributes of the function
-        print(f'================= Evaluated Function =================')
+        print('================= Evaluated Function =================')
         print(f'{function_str}')
-        print(f'------------------------------------------------------')
+        print('------------------------------------------------------')
         print(f'Score        : {str(score)}')
         print(f'Sample time  : {str(sample_time)}')
         print(f'Evaluate time: {str(evaluate_time)}')
         print(f'Sample orders: {str(sample_orders)}')
-        print(f'======================================================\n\n')
+        print('======================================================\n\n')
 
         # update best function
         if function.score is not None and score > self._cur_best_program_score:

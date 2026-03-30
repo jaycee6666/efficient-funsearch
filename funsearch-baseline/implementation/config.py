@@ -19,8 +19,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Type
 
-from implementation import sampler
-from implementation import evaluator
+from implementation import evaluator, sampler
 
 
 @dataclasses.dataclass(frozen=True)

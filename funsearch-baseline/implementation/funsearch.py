@@ -16,18 +16,15 @@
 """A single-threaded implementation of the FunSearch pipeline."""
 from __future__ import annotations
 
-# from collections.abc import Sequence
+from collections.abc import Sequence
 
+# from collections.abc import Sequence
 # RZ: there are multiple errors in the original code
 # we should use typing.xxx rather than collections.abc.xxx
-from typing import Any, Tuple, Sequence
+from typing import Any, Tuple
 
-from implementation import code_manipulation
+from implementation import code_manipulation, evaluator, profile, programs_database, sampler
 from implementation import config as config_lib
-from implementation import evaluator
-from implementation import programs_database
-from implementation import sampler
-from implementation import profile
 
 
 def _extract_function_names(specification: str) -> Tuple[str, str]:
@@ -85,7 +82,7 @@ def main(
                 template_str=str(template),
                 function_to_evolve=function_to_evolve,
             )
-            print(f"[FunSearch] Phase 2 behavioral dedup enabled")
+            print("[FunSearch] Phase 2 behavioral dedup enabled")
         except ImportError as e:
             print(f"[FunSearch] Failed to import dedup module, skipping dedup: {e}")
 

@@ -118,13 +118,24 @@
 
 ### 4.4 工程验证
 
-- `ruff check .` 已通过
 - `pytest -q -rs` 已通过：**65 passed, 0 skipped**
+- `ruff check .` 已通过：**All checks passed!**
 - US1/US2/US3 主线路径均已由单元与集成测试覆盖
 
 ---
 
-## 5. 可复现性
+## 5. 可复现性与 Colab 提交对齐（Course Instruction 1.2）
+
+课程 1.2 要求代码以 Google Colab 形式可直接运行并带有清晰说明。当前对应路径：
+
+- `notebooks/efficient_funsearch_colab.ipynb`
+
+该 Colab notebook 提供：
+
+1. 高层任务摘要（代码目标与任务背景）
+2. 从克隆、安装到运行验证的完整流程
+3. 关键单元注释（每段代码用途说明）
+4. 可直接运行的 milestone 风格输出（`N_total/N_unique/sample_efficiency/duplicate_rate/...`）
 
 ```bash
 ruff check .
@@ -133,5 +144,10 @@ pytest -q -rs
 
 预期：
 
-- lint pass
 - tests pass（currently 65 passed, 0 skipped）
+- lint pass
+
+### 5.1 提交前质量门禁快照（2026-03-30）
+
+- `ruff check .` → **All checks passed!**
+- `pytest -q -rs` → **65 passed in 0.29s**

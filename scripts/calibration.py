@@ -25,7 +25,7 @@ import numpy as np
 # Add repository root to sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-from src.dedup.probing import compute_fingerprint, PROBING_INSTANCES
+from src.dedup.probing import compute_fingerprint
 
 
 def load_samples(samples_dir: str) -> list[dict]:

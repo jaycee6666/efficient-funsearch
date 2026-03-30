@@ -111,9 +111,37 @@
 **Purpose**: 准备并打包符合课程要求的里程碑交付材料（中期）。
 
 - [x] T036 Verify reproducibility with ruff check and pytest in repository root
-- [x] T037 Populate team info and benchmark details in docs/milestone/milestone_report_draft.md
-- [x] T038 Fill preliminary results from experiment logs in docs/milestone/preliminary_results.md
+- [x] T037 Populate team info and benchmark details in docs/milestone/milestone_report_draft_en.md
+- [x] T038 Fill preliminary results from experiment logs in docs/milestone/milestone_report_draft_en.md and docs/milestone/milestone_report_draft_zh.md
 - [x] T039 Create submission package (report, results, link, reproduction.txt) in docs/milestone/
+
+### Phase 6B: Milestone Emergency Gate (Before 2026-03-31 submission)
+
+**Purpose**: 对齐 `Course_Project_Instruction.md`（1.1 + 1.2），确保“可交付 + 可复现 + 可解释”。
+
+- [x] T040 Confirm milestone draft completeness in docs/milestone/milestone_report_draft_zh.md (problem/motivation, design, preliminary results)
+- [x] T041 Update docs/milestone/reproduction.txt to map exact code/evaluation/program paths required by milestone
+- [x] T042 Create/refresh a submission-ready Colab notebook path and ensure it includes high-level summary + fully runnable pipeline + per-cell comments
+- [x] T043 Run `pytest -q -rs` and archive the pass/fail evidence for milestone notes
+- [x] T044 Run `ruff check .` and keep milestone notes aligned with latest lint status
+- [x] T045 Ensure milestone artifact consistency: report claims, reproduction commands, and repository paths must be mutually consistent
+
+### Phase 6C: Full-Score Hardening Checklist (Milestone)
+
+**Purpose**: 以“评分点可追踪 + 证据可核查”为目标，最大化里程碑得分稳定性。
+
+- [ ] T046 Cross-check `milestone_report_draft_en.md` against rubric wording: problem/motivation, design, preliminary results each has explicit subsection heading
+- [ ] T047 Keep EN/ZH report consistency on key numbers (`N_total`, `N_unique`, `sample_efficiency`, best score) and method narrative
+- [ ] T048 Re-run and snapshot final gate outputs right before submission (`ruff check .`, `pytest -q -rs`) and paste summaries into milestone report appendix/note
+- [ ] T049 Verify `notebooks/efficient_funsearch_colab.ipynb` satisfies Course 1.2: high-level summary, runnable setup, full pipeline, per-cell comments
+- [ ] T050 Verify `docs/milestone/code_link.txt` contains one canonical repo link + one canonical Colab link for graders
+- [ ] T051 Final packaging review in `docs/milestone/README_submit.md` with all checkboxes completed before upload
+- [x] T046 Cross-check `milestone_report_draft_en.md` against rubric wording: problem/motivation, design, preliminary results each has explicit subsection heading
+- [x] T047 Keep EN/ZH report consistency on key numbers (`N_total`, `N_unique`, `sample_efficiency`, best score) and method narrative
+- [x] T048 Re-run and snapshot final gate outputs right before submission (`ruff check .`, `pytest -q -rs`) and paste summaries into milestone report appendix/note
+- [x] T049 Verify `notebooks/efficient_funsearch_colab.ipynb` satisfies Course 1.2: high-level summary, runnable setup, full pipeline, per-cell comments
+- [x] T050 Verify `docs/milestone/code_link.txt` contains one canonical repo link + one canonical Colab link for graders
+- [x] T051 Final packaging review in `docs/milestone/README_submit.md` with all checkboxes completed before upload
 
 **Checkpoint**: `docs/milestone/` 目录包含所有必需文件，且复现脚本验证通过。
 

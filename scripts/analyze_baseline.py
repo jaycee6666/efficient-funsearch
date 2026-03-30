@@ -2,15 +2,14 @@
 """Baseline analysis script for FunSearch bin packing experiment."""
 
 import argparse
+import datetime
+import glob
 import json
 import os
-import glob
-import datetime
 import sys
 
 import numpy as np
 import pandas as pd
-
 
 # Default log directory; can be overridden via --log-dir argument
 _DEFAULT_LOG_DIR = "logs/baseline_50samples"
@@ -28,7 +27,7 @@ def load_json_samples(samples_dir: str) -> list[dict]:
     samples = []
     for fpath in files:
         try:
-            with open(fpath, "r", encoding="utf-8") as f:
+            with open(fpath, encoding="utf-8") as f:
                 data = json.load(f)
                 # Support both single dict and list of dicts
                 if isinstance(data, list):
@@ -135,7 +134,7 @@ def main():
 
     if not os.path.isdir(LOG_DIR):
         print(f"[ERROR] Cannot find log directory: {LOG_DIR}")
-        print(f"Usage: python scripts/analyze_baseline.py --log-dir <path>")
+        print("Usage: python scripts/analyze_baseline.py --log-dir <path>")
         sys.exit(1)
 
     # --- Load JSON samples ---

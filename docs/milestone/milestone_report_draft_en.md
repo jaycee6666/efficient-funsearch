@@ -1,4 +1,4 @@
-# CS5491 Project Milestone Report Draft (English)
+# CS5491 Project Milestone Report Draft
 
 > Aligned with the course milestone requirements:
 > 1) Problem description & motivation
@@ -12,7 +12,7 @@
 - **Course**: CS5491
 - **Project**: Sample-Efficient FunSearch via Behavioral Deduplication and Diversity-Guided Selection
 - **Team members**: CHEN Sijie (59872908) & BIAN Wenbo (59872472)
-- **Date**: 2026-03-27
+- **Date**: 2026-03-31
 
 ---
 
@@ -135,3 +135,9 @@ Expected:
 
 - lint pass
 - tests pass (currently 65 passed, 0 skipped)
+
+### 5.1 Pre-submission Quality Gate Snapshot (2026-03-30)
+
+- `ruff check .` → **All checks passed!**
+- `pytest -q -rs` → **65 passed in 0.29s**
+

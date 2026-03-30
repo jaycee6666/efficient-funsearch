@@ -1,16 +1,20 @@
+import http.client
 import json
 import multiprocessing
 import os
 import sys
-from typing import Collection, Any
-import http.client
-from implementation import funsearch
-from implementation import config
-from implementation import sampler
-from implementation import evaluator_accelerate
-from implementation import evaluator
-from implementation import code_manipulation
+from collections.abc import Collection
+from typing import Any
+
 import bin_packing_utils
+from implementation import (
+    code_manipulation,
+    config,
+    evaluator,
+    evaluator_accelerate,
+    funsearch,
+    sampler,
+)
 
 # Phase 2: Add repo root to sys.path so we can import src.dedup
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -173,16 +177,16 @@ class Sandbox(evaluator.Sandbox):
                 results = None, False
 
         if self._verbose:
-            print(f'================= Evaluated Program =================')
+            print('================= Evaluated Program =================')
             program_: code_manipulation.Program = code_manipulation.text_to_program(text=program)
             func_to_evolve_: str = kwargs.get('func_to_evolve', 'priority')
             function_: code_manipulation.Function = program_.get_function(func_to_evolve_)
             function_: str = str(function_).strip('\n')
             print(f'{function_}')
-            print(f'-----------------------------------------------------')
+            print('-----------------------------------------------------')
             print(f'Score: {str(results)}')
-            print(f'=====================================================')
-            print(f'\n\n')
+            print('=====================================================')
+            print('\n\n')
 
         return results
 

@@ -110,6 +110,36 @@
 - **SC-003**: 按 spec 生成的对比计划 100% 包含 v1 定义的四组基线/消融配置。
 - **SC-004**: 更新后 spec 中与 v1 冲突的 v0 主线描述项为 0。
 
+## Milestone Pre-Submission Checklist (Course Instruction Aligned)
+
+> Source: `Course_Project_Instruction.md`
+> - Milestone deliverables (`Section 1.1`)
+> - Code submission quality baseline (`Section 1.2 Instruction on code submission (Google Colab)`)
+
+为确保 2026-03-31 里程碑提交可通过且后续 Final 可平滑衔接，提交前必须满足：
+
+1. **Report Draft 完整**
+   - 主文档：`docs/milestone/milestone_report_draft_zh.md`
+   - 内容至少覆盖：Problem description & motivation、Design、Preliminary results。
+
+2. **Code + Evaluation + Required Programs 可直接定位**
+   - 代码与脚本路径在 `docs/milestone/reproduction.txt` 中给出。
+   - 可直接对应课程要求中的：Code / Evaluation / Any other programs required。
+
+3. **预提交 Colab（按 1.2 提前对齐）**
+   - 包含高层摘要：代码做什么、任务是什么。
+   - 包含可复现实验所需完整流程：数据处理（如适用）/方法定义/运行与评估。
+   - 每个关键 cell 有清晰注释。
+   - 从全新 runtime 启动后可直接运行（self-contained and runnable as it is）。
+
+4. **质量门禁（提交前）**
+   - 至少完成一次全量测试并记录结果：`pytest -q -rs`。
+   - 对提交范围内代码执行 lint 检查并记录策略：
+     - 若 `ruff check .` 失败，必须在里程碑说明中明确失败来源、影响范围、临时处置与后续修复计划。
+
+5. **提交材料闭环**
+   - `docs/milestone/` 下的文档、代码链接、复现说明三者一致（命令、路径、输出口径一致）。
+
 ## Assumptions
 
 - 项目问题域保持为在线装箱任务。

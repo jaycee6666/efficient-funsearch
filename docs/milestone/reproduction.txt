@@ -27,6 +27,16 @@ ruff check .
 pytest -q -rs
 ```
 
+3.0) Colab-aligned code submission path (Course Instruction 1.2)
+
+- Canonical Colab notebook in this repo:
+  - `notebooks/efficient_funsearch_colab.ipynb`
+- Required 1.2 alignment checklist:
+  - high-level summary of code/task
+  - reproducible pipeline cells (setup/import/run/evaluation)
+  - detailed comments for key cells
+  - self-contained runnable flow in fresh runtime
+
 3.1) Reproduce quick preliminary milestone numbers (smoke run)
 
 ```bash
@@ -67,11 +77,11 @@ PY
 ```
 
 4) Expected output summary
-- `ruff check .` should report: `All checks passed!`
 - `pytest -q -rs` should pass all tests.
   Current verified snapshot in this repository:
   - 65 passed
   - 0 skipped
+- `ruff check .` should report: `All checks passed!`
 - Quick preliminary run should print two JSON rows (`original`, `behavioral_plus_diversity`) with fields:
   - `N_total`, `N_unique`, `sample_efficiency`, `duplicate_rate`, `convergence_proxy`, `final_quality_proxy`
 

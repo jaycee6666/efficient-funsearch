@@ -29,10 +29,10 @@ The 'call' of the function is 'add_file'.
 from __future__ import annotations
 
 import ast
-from collections.abc import Iterator, MutableSet, Sequence
 import dataclasses
 import io
 import tokenize
+from collections.abc import Iterator, MutableSet, Sequence
 
 from absl import logging
 

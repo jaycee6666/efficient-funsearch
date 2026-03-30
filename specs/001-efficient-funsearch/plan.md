@@ -470,6 +470,29 @@ Check `milestone_submission/` contains all 4 required files.
 6. 指标输出包含：`sample_efficiency`、`duplicate_detection_rate`、`convergence`、`final_quality`
 7. `milestone_submission/` 包含 report_draft.md, preliminary_results.md, code_link.txt, reproduction.txt
 
+### Milestone Emergency Gate (Course Instruction 1.1 + 1.2)
+
+在里程碑提交前必须追加完成以下核查（与 `Course_Project_Instruction.md` 对齐）：
+
+1. **里程碑报告草稿（ZH）可提交**
+   - 目标文件：`docs/milestone/milestone_report_draft_zh.md`
+   - 必含三段：问题与动机、方法设计、初步结果。
+
+2. **代码提交要求预对齐到 Colab（参考 1.2）**
+   - Colab 需包含高层任务摘要。
+   - Colab 需覆盖可复现流程（数据/方法/训练或评估流水线，按项目实际）。
+   - Colab 关键 cell 需有详细注释。
+   - Colab 从空环境可直接运行（self-contained）。
+
+3. **质量结果必须留痕**
+   - 执行并记录：`pytest -q -rs`。
+   - 执行并记录：`ruff check .`。
+   - 若 lint 未通过，里程碑说明中必须明确：失败文件范围、是否影响复现实验主路径、提交后修复计划。
+
+4. **复现说明与报告一致性**
+   - `docs/milestone/reproduction.txt` 的命令、路径与 `milestone_report_draft_zh.md` 叙述一致。
+   - 不允许出现“报告写了但仓库无对应脚本/日志路径”的断链。
+
 ---
 
 ## Requirement Traceability (Spec → Plan)

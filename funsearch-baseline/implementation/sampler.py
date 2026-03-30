@@ -15,14 +15,14 @@
 
 """Class for sampling new programs."""
 from __future__ import annotations
-from abc import ABC, abstractmethod
 
-from typing import Collection, Sequence, Type
-import numpy as np
 import time
+from abc import ABC, abstractmethod
+from collections.abc import Collection, Sequence
+from typing import Type
 
-from implementation import evaluator
-from implementation import programs_database
+import numpy as np
+from implementation import evaluator, programs_database
 
 
 class LLM(ABC):

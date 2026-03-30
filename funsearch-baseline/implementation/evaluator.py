@@ -16,16 +16,15 @@
 """Class for evaluating programs proposed by the Sampler."""
 from __future__ import annotations
 
-from abc import abstractmethod, ABC
 import ast
-import time
-from collections.abc import Sequence
 import copy
-from typing import Any, Type
 import profile
+import time
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from typing import Any, Type
 
-from implementation import code_manipulation
-from implementation import programs_database
+from implementation import code_manipulation, programs_database
 
 
 class _FunctionLineVisitor(ast.NodeVisitor):

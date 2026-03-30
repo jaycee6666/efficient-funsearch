@@ -16,17 +16,16 @@
 """A programs database that implements the evolutionary algorithm."""
 from __future__ import annotations
 
-import profile
-from collections.abc import Mapping, Sequence
 import copy
 import dataclasses
+import profile
 import time
-from typing import Any, Tuple, Mapping
+from collections.abc import Mapping, Sequence
+from typing import Any, Tuple
 
-from absl import logging
 import numpy as np
 import scipy
-
+from absl import logging
 from implementation import code_manipulation
 from implementation import config as config_lib
 
