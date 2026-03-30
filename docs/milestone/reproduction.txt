@@ -130,3 +130,28 @@ Expected output (pre-run logs already included in the repo at funsearch-baseline
 Note: Running the full experiment requires a valid API key and takes ~40 minutes.
       The pre-run logs in funsearch-baseline/logs/baseline_50samples/ can be used
       to reproduce the analysis without re-running the LLM experiment.
+
+8) Reproduce behavioral dedup experiment
+
+Environment: Same as Section 7 (conda funsearch, Python 3.10)
+
+Steps:
+  a) conda activate funsearch
+  b) cd funsearch-baseline/
+  c) export API_KEY="<your-key>"
+  d) export API_BASE="api.bltcy.ai"
+  e) export API_MODEL="gpt-5-nano"
+  f) export DEDUP_ENABLED=1
+  g) python funsearch_bin_packing_llm_api.py
+
+Pre-run logs already included at funsearch-baseline/logs/dedup_50samples_v2/:
+- run_log.csv contains columns: sample_order, score, sample_time, evaluate_time,
+  is_duplicate, dedup_level, dedup_time_ms
+- Expected: ~30% dedup rate, best_score ≈ -212.0
+- 16 out of 52 samples filtered by Level 1 (behavioral fingerprint exact match)
+
+To disable dedup and run as baseline:
+  export DEDUP_ENABLED=0
+
+Note: Running requires a valid API key and takes ~40 minutes.
+      Pre-run logs can be inspected directly without re-running.

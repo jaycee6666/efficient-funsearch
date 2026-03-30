@@ -35,6 +35,8 @@ Status (2026-03-30):
 - [x] Report draft exported to PDF (`milestone_report_draft.pdf`) if submission system prefers PDF
 - [x] Reproduction commands validated locally
 - [x] Colab path and 1.2 requirements are explicitly stated (`notebooks/efficient_funsearch_colab.ipynb`)
+- [x] Behavioral dedup results added to milestone_report_draft_en.md
+- [x] Behavioral dedup reproduction steps added to reproduction.txt
 
 ## Reproduction Commands
 
