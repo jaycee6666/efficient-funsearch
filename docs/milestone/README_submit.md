@@ -37,6 +37,7 @@ Status (2026-03-30):
 - [x] Colab path and 1.2 requirements are explicitly stated (`notebooks/efficient_funsearch_colab.ipynb`)
 - [x] Behavioral dedup results added to milestone_report_draft_en.md
 - [x] Behavioral dedup reproduction steps added to reproduction.txt
+- [x] Colab notebook enhanced: 25 cells, 8 parts, all cells executed successfully, 3 visualizations
 
 ## Reproduction Commands
 
