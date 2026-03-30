@@ -4,16 +4,17 @@ This folder contains the files prepared for milestone submission.
 
 ## Included Files
 
-1. ``milestone_report_draft.pdf`
+1. `milestone_report_draft.pdf`
+   
    - containing: problem description, method design, and preliminary results
 2. `code_link.txt`
+   
    - GitHub repository links and notebook links
 3. `reproduction.txt`
+   
    - Environment, setup, verification commands, and expected outputs
-4. `README_submit.md`
-   - This submission note file
-
-5. `notebooks/efficient_funsearch_colab.ipynb`
+4. `notebooks/efficient_funsearch_colab.ipynb`
+   
 
    
 
@@ -31,7 +32,7 @@ Status (2026-03-30):
 - [x] Team member information is filled in `milestone_report_draft_en.md`
 - [x] Benchmark information is filled in `milestone_report_draft_en.md`
 - [x] Preliminary result table is filled in `milestone_report_draft_en.md`
-- [ ] (Optional) Report draft exported to PDF (`milestone_report_draft.pdf`) if submission system prefers PDF
+- [x] Report draft exported to PDF (`milestone_report_draft.pdf`) if submission system prefers PDF
 - [x] Reproduction commands validated locally
 - [x] Colab path and 1.2 requirements are explicitly stated (`notebooks/efficient_funsearch_colab.ipynb`)
 
