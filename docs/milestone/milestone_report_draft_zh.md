@@ -13,6 +13,8 @@
 - **项目题目**: 基于行为去重与多样性引导选择的高样本效率 FunSearch
 - **团队成员**: CHEN Sijie (59872908) & BIAN Wenbo (59872472)
 - **日期**: 2026-03-31
+- **Repository**: https://github.com/jaycee6666/efficient-funsearch
+- **Google Colab**: https://colab.research.google.com/github/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_colab.ipynb
 
 ---
 

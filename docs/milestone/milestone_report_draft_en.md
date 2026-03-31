@@ -13,6 +13,8 @@
 - **Project**: Sample-Efficient FunSearch via Behavioral Deduplication and Diversity-Guided Selection
 - **Team members**: CHEN Sijie (59872908) & BIAN Wenbo (59872472)
 - **Date**: 2026-03-31
+- **Repository**: https://github.com/jaycee6666/efficient-funsearch
+- **Google Colab**: https://colab.research.google.com/github/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_colab.ipynb
 
 ---
 
