@@ -218,10 +218,3 @@ cat logs/dedup_50samples_v2/run_log.csv
 export DEDUP_ENABLED=0
 python funsearch_bin_packing_llm_api.py
 ```
-
-### 5.1 Pre-submission Quality Gate Snapshot (2026-03-30)
-
-- `ruff check .` → **All checks passed!**
-- `pytest -q -rs` → **65 passed in 0.27s**
-
-![Pre-submission Quality Gate Snapshot](Pre-submission Quality Gate Snapshot.png)

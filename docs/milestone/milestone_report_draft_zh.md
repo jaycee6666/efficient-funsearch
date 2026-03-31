@@ -12,7 +12,7 @@
 - **课程**: CS5491
 - **项目题目**: 基于行为去重与多样性引导选择的高样本效率 FunSearch
 - **团队成员**: CHEN Sijie (59872908) & BIAN Wenbo (59872472)
-- **日期**: 2026-03-27
+- **日期**: 2026-03-31
 
 ---
 
@@ -229,8 +229,3 @@ cat logs/dedup_50samples_v2/run_log.csv
 export DEDUP_ENABLED=0
 python funsearch_bin_packing_llm_api.py
 ```
-
-### 5.1 提交前质量门禁快照（2026-03-30）
-
-- `ruff check .` → **All checks passed!**
-- `pytest -q -rs` → **65 passed in 0.29s**
