@@ -316,6 +316,7 @@ if __name__ == '__main__':
             print(f"[Config] Diversity-guided selection enabled: {diversity_config}")
         except Exception as e:
             print(f"[Config] Failed to create DiversityConfig, disabling diversity: {e}")
+            DIVERSITY_ENABLED = False
 
     class_config = config.ClassConfig(llm_class=LLMAPI, sandbox_class=Sandbox)
     config = config.Config(

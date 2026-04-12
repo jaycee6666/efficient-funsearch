@@ -93,8 +93,16 @@ def _compute_diversity_scores(signatures: list) -> np.ndarray:
     sig_norm = centered / norms_safe
     # Pairwise cosine similarity, then convert to distance in [0, 2]
     sim_matrix = sig_norm @ sig_norm.T
-    np.fill_diagonal(sim_matrix, 0.0)
-    mean_sim = sim_matrix.sum(axis=1) / (n - 1)
+    # Exclude zero-variance clusters from aggregation: they contribute 0 to the
+    # dot product (zero vector), which would dilute mean_sim for other clusters
+    # and artificially inflate their diversity. Only count valid-vs-valid pairs.
+    valid_mask = ~zero_var_mask
+    valid_2d = np.outer(valid_mask, valid_mask)
+    np.fill_diagonal(valid_2d, False)
+    valid_sim_sums = (sim_matrix * valid_2d).sum(axis=1)
+    valid_counts = valid_2d.sum(axis=1)
+    safe_counts = np.where(valid_counts > 0, valid_counts, 1)
+    mean_sim = valid_sim_sums / safe_counts
     diversity = 1.0 - mean_sim
     # Zero-variance clusters have no discriminating pattern; assign diversity=0
     diversity[zero_var_mask] = 0.0
@@ -295,9 +303,13 @@ class Island:
                 and self._diversity_config.enabled
                 and len(signatures) > 1):
             div_scores = _compute_diversity_scores(signatures)
-            beta = self._diversity_config.beta_init * max(
-                0.0, 1.0 - self._num_programs / self._diversity_config.beta_decay_period
-            )
+            decay_period = self._diversity_config.beta_decay_period
+            if decay_period <= 0:
+                beta = 0.0
+            else:
+                beta = self._diversity_config.beta_init * max(
+                    0.0, 1.0 - self._num_programs / decay_period
+                )
             norm_perf = _normalize_scores(cluster_scores)
             norm_div = _normalize_scores(div_scores)
             combined = norm_perf + beta * norm_div

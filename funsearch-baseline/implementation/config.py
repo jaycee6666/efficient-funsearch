@@ -69,7 +69,9 @@ class Config:
           can execute in parallel as part of a distributed system.
       samples_per_prompt: How many independently sampled program continuations to
           obtain for each prompt.
-      dedup: Phase 2 dedup configuration (None means dedup is disabled)
+      dedup: Phase 2 dedup configuration (None means dedup is disabled).
+      diversity: Phase 3 diversity-guided selection configuration
+          (None means diversity is disabled; DiversityConfig instance enables it).
     """
     programs_database: ProgramsDatabaseConfig = dataclasses.field(default_factory=ProgramsDatabaseConfig)
     num_samplers: int = 1  # RZ: I just use one samplers
