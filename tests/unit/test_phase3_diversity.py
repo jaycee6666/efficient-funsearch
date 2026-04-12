@@ -45,9 +45,9 @@ class TestComputeDiversityScores:
         # Two clusters whose signatures are orthogonal vectors
         sigs = [(1.0, 0.0), (0.0, 1.0)]
         result = _compute_diversity_scores(sigs)
-        # cosine similarity = 0 → distance = 1
-        assert result[0] == pytest.approx(1.0, abs=1e-6)
-        assert result[1] == pytest.approx(1.0, abs=1e-6)
+        # Euclidean distance between (1,0) and (0,1) = sqrt(2)
+        assert result[0] == pytest.approx(np.sqrt(2), abs=1e-6)
+        assert result[1] == pytest.approx(np.sqrt(2), abs=1e-6)
 
     def test_diverse_cluster_gets_higher_score(self):
         # sigs[2] is very different from sigs[0] and sigs[1] which are similar

@@ -61,10 +61,10 @@ def _normalize_scores(scores: np.ndarray) -> np.ndarray:
 
 
 def _compute_diversity_scores(signatures: list) -> np.ndarray:
-    """Compute diversity score for each cluster as mean cosine distance to others.
+    """Compute diversity score for each cluster as mean Euclidean distance to others.
 
-    Uses L2-normalized cluster signatures for pairwise comparison.
-    Returns an array of shape (n,) with values in [0, 1].
+    Uses pairwise Euclidean distance between cluster signatures.
+    Returns an array of shape (n,) with values >= 0.
     Returns zeros if fewer than 2 clusters (no comparison possible).
     """
     n = len(signatures)
@@ -72,14 +72,10 @@ def _compute_diversity_scores(signatures: list) -> np.ndarray:
         return np.zeros(n)
 
     sig_matrix = np.array([list(sig) for sig in signatures], dtype=np.float64)
-    norms = np.linalg.norm(sig_matrix, axis=1, keepdims=True)
-    norms = np.where(norms < 1e-8, 1.0, norms)
-    sig_norm = sig_matrix / norms
-
-    sim_matrix = sig_norm @ sig_norm.T  # shape: (n, n), diagonal = 1.0
-    np.fill_diagonal(sim_matrix, 0.0)
-    mean_sim = sim_matrix.sum(axis=1) / (n - 1)
-    return 1.0 - mean_sim  # higher = more novel
+    diff = sig_matrix[:, np.newaxis, :] - sig_matrix[np.newaxis, :, :]  # (n, n, d)
+    dist_matrix = np.sqrt((diff ** 2).sum(axis=2))  # (n, n), diagonal = 0.0
+    mean_dist = dist_matrix.sum(axis=1) / (n - 1)
+    return mean_dist  # higher = more novel; caller normalizes to [0, 1]
 
 
 def _reduce_score(scores_per_test: ScoresPerTest) -> float:

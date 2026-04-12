@@ -292,13 +292,15 @@ def priority(item: float, bins: np.ndarray) -> np.ndarray:
 # Because the inner code uses multiprocess evaluation.
 if __name__ == '__main__':
     # Phase 2: Import dedup config (can be disabled via env var DEDUP_ENABLED=0)
+    DEDUP_ENABLED = os.environ.get('DEDUP_ENABLED', '1') != '0'
     dedup_config = None
-    if os.environ.get('DEDUP_ENABLED', '1') != '0':
+    if DEDUP_ENABLED:
         try:
             from src.dedup.dedup_config import DedupConfig
             dedup_config = DedupConfig(enabled=True)
         except ImportError:
             print("[Warning] src.dedup not found, disabling dedup")
+            DEDUP_ENABLED = False
 
     # Phase 3: Diversity-guided selection (optional)
     DIVERSITY_ENABLED = os.environ.get('DIVERSITY_ENABLED', '0') == '1'
@@ -335,6 +337,15 @@ if __name__ == '__main__':
     #     log_dir='logs/dedup_15samples_v2',
     # )
 
+    log_dir = os.environ.get('LOG_DIR', None)
+    if log_dir is None:
+        if DIVERSITY_ENABLED:
+            log_dir = 'logs/diversity_50samples'
+        elif DEDUP_ENABLED:
+            log_dir = 'logs/dedup_50samples_v2'
+        else:
+            log_dir = 'logs/baseline_50samples'
+
     global_max_sample_num = 51  # Counter starts from 1, so set 51 to actually generate 50 LLM samples
     funsearch.main(
         specification=specification,
@@ -342,5 +353,5 @@ if __name__ == '__main__':
         config=config,
         max_sample_nums=global_max_sample_num,
         class_config=class_config,
-        log_dir='logs/dedup_50samples_v2',
+        log_dir=log_dir,
     )
