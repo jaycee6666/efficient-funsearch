@@ -8,6 +8,7 @@ import pytest
 # Allow importing from funsearch-baseline
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../funsearch-baseline'))
 
+from funsearch_bin_packing_llm_api import _build_per_instance_inputs
 from implementation.programs_database import _normalize_scores, _compute_diversity_scores
 
 
@@ -81,7 +82,30 @@ class TestComputeDiversityScores:
         assert result[0] == pytest.approx(0.0, abs=1e-6)
         assert result[1] == pytest.approx(0.0, abs=1e-6)
 
+    def test_lone_non_flat_cluster_without_valid_peers_has_zero_diversity(self):
+        sigs = [
+            (-1.0, -2.0),
+            (-3.0, -3.0),
+            (-4.0, -4.0),
+        ]
+        result = _compute_diversity_scores(sigs)
+        np.testing.assert_array_equal(result, np.zeros(3))
+
     def test_returns_array_of_correct_length(self):
         sigs = [(-212.0,), (-300.0,), (-250.0,), (-180.0,)]
         result = _compute_diversity_scores(sigs)
         assert len(result) == 4
+
+
+class TestBinPackingInputs:
+    def test_build_per_instance_inputs_creates_multi_test_mapping(self):
+        dataset = {
+            "inst_a": {"capacity": 10, "num_items": 2, "items": (3, 4)},
+            "inst_b": {"capacity": 12, "num_items": 3, "items": (2, 5, 1)},
+        }
+
+        per_instance_inputs = _build_per_instance_inputs(dataset)
+
+        assert set(per_instance_inputs.keys()) == {"inst_a", "inst_b"}
+        assert per_instance_inputs["inst_a"] == {"inst_a": dataset["inst_a"]}
+        assert per_instance_inputs["inst_b"] == {"inst_b": dataset["inst_b"]}

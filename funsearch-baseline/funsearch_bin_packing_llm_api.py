@@ -20,6 +20,19 @@ from implementation import (
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 
+def _build_per_instance_inputs(dataset: dict[str, dict[str, Any]]) -> dict[str, dict[str, dict[str, Any]]]:
+    """Wrap each bin-packing instance as its own top-level test input.
+
+    FunSearch records one score per top-level input key. Splitting OR3 into
+    per-instance inputs makes cluster signatures reflect the full score pattern
+    across instances instead of collapsing to a single averaged scalar.
+    """
+    return {
+        instance_name: {instance_name: instance}
+        for instance_name, instance in dataset.items()
+    }
+
+
 def _trim_preface_of_body(sample: str) -> str:
     """Trim the redundant descriptions/symbols/'def' declaration before the function body.
     Please see my comments in sampler.LLM (in sampler.py).
@@ -326,7 +339,7 @@ if __name__ == '__main__':
         diversity=diversity_config,
     )
 
-    bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
+    bin_packing_or3 = _build_per_instance_inputs(bin_packing_utils.datasets['OR3'])
     # --- 15-sample small-scale validation (passed, Round 2 dedup rate 50%, best=-232.95) ---
     # global_max_sample_num = 16
     # funsearch.main(

@@ -101,9 +101,15 @@ def _compute_diversity_scores(signatures: list) -> np.ndarray:
     np.fill_diagonal(valid_2d, False)
     valid_sim_sums = (sim_matrix * valid_2d).sum(axis=1)
     valid_counts = valid_2d.sum(axis=1)
-    safe_counts = np.where(valid_counts > 0, valid_counts, 1)
-    mean_sim = valid_sim_sums / safe_counts
-    diversity = 1.0 - mean_sim
+    mean_sim = np.divide(
+        valid_sim_sums,
+        valid_counts,
+        out=np.zeros_like(valid_sim_sums, dtype=np.float64),
+        where=valid_counts > 0,
+    )
+    diversity = np.zeros(n, dtype=np.float64)
+    has_valid_peer = valid_counts > 0
+    diversity[has_valid_peer] = 1.0 - mean_sim[has_valid_peer]
     # Zero-variance clusters have no discriminating pattern; assign diversity=0
     diversity[zero_var_mask] = 0.0
     return diversity  # higher = more novel; caller normalizes to [0, 1]
