@@ -52,6 +52,36 @@ def _softmax(logits: np.ndarray, temperature: float) -> np.ndarray:
     return result
 
 
+def _normalize_scores(scores: np.ndarray) -> np.ndarray:
+    """Normalize scores to [0, 1]. Returns zeros if all scores are equal."""
+    lo, hi = scores.min(), scores.max()
+    if hi - lo < 1e-8:
+        return np.zeros_like(scores)
+    return (scores - lo) / (hi - lo)
+
+
+def _compute_diversity_scores(signatures: list) -> np.ndarray:
+    """Compute diversity score for each cluster as mean cosine distance to others.
+
+    Uses L2-normalized cluster signatures for pairwise comparison.
+    Returns an array of shape (n,) with values in [0, 1].
+    Returns zeros if fewer than 2 clusters (no comparison possible).
+    """
+    n = len(signatures)
+    if n < 2:
+        return np.zeros(n)
+
+    sig_matrix = np.array([list(sig) for sig in signatures], dtype=np.float64)
+    norms = np.linalg.norm(sig_matrix, axis=1, keepdims=True)
+    norms = np.where(norms < 1e-8, 1.0, norms)
+    sig_norm = sig_matrix / norms
+
+    sim_matrix = sig_norm @ sig_norm.T  # shape: (n, n), diagonal = 1.0
+    np.fill_diagonal(sim_matrix, 0.0)
+    mean_sim = sim_matrix.sum(axis=1) / (n - 1)
+    return 1.0 - mean_sim  # higher = more novel
+
+
 def _reduce_score(scores_per_test: ScoresPerTest) -> float:
     """Reduces per-test scores into a single score.
     """
@@ -90,18 +120,21 @@ class ProgramsDatabase:
             config: config_lib.ProgramsDatabaseConfig,
             template: code_manipulation.Program,
             function_to_evolve: str,
+            diversity_config=None,
     ) -> None:
         self._config: config_lib.ProgramsDatabaseConfig = config
         self._template: code_manipulation.Program = template
         self._function_to_evolve: str = function_to_evolve
 
         # Initialize empty islands.
+        self._diversity_config = diversity_config
         self._islands: list[Island] = []
         for _ in range(config.num_islands):
             self._islands.append(
                 Island(template, function_to_evolve, config.functions_per_prompt,
                        config.cluster_sampling_temperature_init,
-                       config.cluster_sampling_temperature_period))
+                       config.cluster_sampling_temperature_period,
+                       diversity_config=diversity_config))
         self._best_score_per_island: list[float] = (
                 [-float('inf')] * config.num_islands)
         self._best_program_per_island: list[code_manipulation.Function | None] = (
@@ -183,7 +216,8 @@ class ProgramsDatabase:
                 self._function_to_evolve,
                 self._config.functions_per_prompt,
                 self._config.cluster_sampling_temperature_init,
-                self._config.cluster_sampling_temperature_period)
+                self._config.cluster_sampling_temperature_period,
+                diversity_config=self._diversity_config)
             self._best_score_per_island[island_id] = -float('inf')
             founder_island_id = np.random.choice(keep_islands_ids)
             founder = self._best_program_per_island[founder_island_id]
@@ -201,6 +235,7 @@ class Island:
             functions_per_prompt: int,
             cluster_sampling_temperature_init: float,
             cluster_sampling_temperature_period: int,
+            diversity_config=None,
     ) -> None:
         self._template: code_manipulation.Program = template
         self._function_to_evolve: str = function_to_evolve
@@ -208,6 +243,7 @@ class Island:
         self._cluster_sampling_temperature_init = cluster_sampling_temperature_init
         self._cluster_sampling_temperature_period = (
             cluster_sampling_temperature_period)
+        self._diversity_config = diversity_config
 
         self._clusters: dict[Signature, Cluster] = {}
         self._num_programs: int = 0
@@ -232,16 +268,25 @@ class Island:
         cluster_scores = np.array(
             [self._clusters[signature].score for signature in signatures])
 
-        # Convert scores to probabilities using softmax with temperature schedule.
         period = self._cluster_sampling_temperature_period
         temperature = self._cluster_sampling_temperature_init * (
                 1 - (self._num_programs % period) / period)
-        probabilities = _softmax(cluster_scores, temperature)
 
-        # At the beginning of an experiment when we have few clusters, place fewer
-        # programs into the prompt.
+        if (self._diversity_config is not None
+                and self._diversity_config.enabled
+                and len(signatures) > 1):
+            div_scores = _compute_diversity_scores(signatures)
+            beta = self._diversity_config.beta_init * max(
+                0.0, 1.0 - self._num_programs / self._diversity_config.beta_decay_period
+            )
+            norm_perf = _normalize_scores(cluster_scores)
+            norm_div = _normalize_scores(div_scores)
+            combined = norm_perf + beta * norm_div
+            probabilities = _softmax(combined, temperature)
+        else:
+            probabilities = _softmax(cluster_scores, temperature)
+
         functions_per_prompt = min(len(self._clusters), self._functions_per_prompt)
-
         idx = np.random.choice(
             len(signatures), size=functions_per_prompt, p=probabilities)
         chosen_signatures = [signatures[i] for i in idx]

@@ -63,7 +63,12 @@ def main(
     """
     function_to_evolve, function_to_run = _extract_function_names(specification)
     template = code_manipulation.text_to_program(specification)
-    database = programs_database.ProgramsDatabase(config.programs_database, template, function_to_evolve)
+    database = programs_database.ProgramsDatabase(
+        config.programs_database,
+        template,
+        function_to_evolve,
+        diversity_config=getattr(config, 'diversity', None),
+    )
 
     # get log_dir and create profiler
     log_dir = kwargs.get('log_dir', None)
@@ -85,6 +90,11 @@ def main(
             print("[FunSearch] Phase 2 behavioral dedup enabled")
         except ImportError as e:
             print(f"[FunSearch] Failed to import dedup module, skipping dedup: {e}")
+
+    if getattr(config, 'diversity', None) is not None and config.diversity.enabled:
+        print(f"[FunSearch] Phase 3 diversity-guided selection enabled "
+              f"(beta_init={config.diversity.beta_init}, "
+              f"beta_decay_period={config.diversity.beta_decay_period})")
 
     evaluators = []
     for _ in range(config.num_evaluators):

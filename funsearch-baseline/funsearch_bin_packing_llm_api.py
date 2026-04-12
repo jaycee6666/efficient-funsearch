@@ -300,11 +300,27 @@ if __name__ == '__main__':
         except ImportError:
             print("[Warning] src.dedup not found, disabling dedup")
 
+    # Phase 3: Diversity-guided selection (optional)
+    DIVERSITY_ENABLED = os.environ.get('DIVERSITY_ENABLED', '0') == '1'
+    diversity_config = None
+    if DIVERSITY_ENABLED:
+        try:
+            from implementation.config import DiversityConfig
+            diversity_config = DiversityConfig(
+                enabled=True,
+                beta_init=float(os.environ.get('DIVERSITY_BETA_INIT', '0.3')),
+                beta_decay_period=int(os.environ.get('DIVERSITY_BETA_DECAY', '350')),
+            )
+            print(f"[Config] Diversity-guided selection enabled: {diversity_config}")
+        except Exception as e:
+            print(f"[Config] Failed to create DiversityConfig, disabling diversity: {e}")
+
     class_config = config.ClassConfig(llm_class=LLMAPI, sandbox_class=Sandbox)
     config = config.Config(
         samples_per_prompt=4,
         evaluate_timeout_seconds=30,
         dedup=dedup_config,  # Phase 2: Pass dedup config
+        diversity=diversity_config,
     )
 
     bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
