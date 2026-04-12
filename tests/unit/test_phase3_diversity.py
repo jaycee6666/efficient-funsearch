@@ -72,6 +72,15 @@ class TestComputeDiversityScores:
         assert result[2] > result[0]
         assert result[2] > result[1]
 
+    def test_zero_variance_clusters_have_zero_diversity(self):
+        # Both clusters score identically on all tests: no discriminating pattern.
+        # After row-centering the vectors become (0,...,0); cosine similarity is
+        # undefined. These clusters should be assigned diversity=0, not 1.0.
+        sigs = [(-1.0, -1.0), (-2.0, -2.0)]
+        result = _compute_diversity_scores(sigs)
+        assert result[0] == pytest.approx(0.0, abs=1e-6)
+        assert result[1] == pytest.approx(0.0, abs=1e-6)
+
     def test_returns_array_of_correct_length(self):
         sigs = [(-212.0,), (-300.0,), (-250.0,), (-180.0,)]
         result = _compute_diversity_scores(sigs)

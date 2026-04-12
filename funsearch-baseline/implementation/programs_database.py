@@ -71,8 +71,11 @@ def _compute_diversity_scores(signatures: list) -> np.ndarray:
     Example: (-100,-200) vs (-200,-400) are proportionally equivalent -> diversity=0.
     Example: (-100,-400) vs (-400,-100) have opposite patterns -> diversity=2 (max).
 
-    Returns an array of shape (n,) in [0, 2]. Clusters with near-zero variance
-    across test instances are treated as maximally similar (zero diversity).
+    Zero-variance clusters (identical score on every test instance) carry no pattern
+    information; they are assigned diversity=0 rather than participating in cosine
+    comparison (where a zero vector would yield undefined similarity).
+
+    Returns an array of shape (n,) in [0, 2].
     Returns zeros if fewer than 2 clusters.
     """
     n = len(signatures)
@@ -83,15 +86,19 @@ def _compute_diversity_scores(signatures: list) -> np.ndarray:
     # Subtract per-cluster mean so diversity reflects relative pattern, not absolute level
     row_means = sig_matrix.mean(axis=1, keepdims=True)
     centered = sig_matrix - row_means
-    # Normalize rows; if a cluster scores identically on all tests, treat as no pattern
     norms = np.linalg.norm(centered, axis=1, keepdims=True)
-    norms = np.where(norms < 1e-8, 1.0, norms)
-    sig_norm = centered / norms
+    # Track zero-variance rows before overwriting norms (they have no pattern to compare)
+    zero_var_mask = (norms < 1e-8).ravel()
+    norms_safe = np.where(norms < 1e-8, 1.0, norms)
+    sig_norm = centered / norms_safe
     # Pairwise cosine similarity, then convert to distance in [0, 2]
     sim_matrix = sig_norm @ sig_norm.T
     np.fill_diagonal(sim_matrix, 0.0)
     mean_sim = sim_matrix.sum(axis=1) / (n - 1)
-    return 1.0 - mean_sim  # higher = more novel; caller normalizes to [0, 1]
+    diversity = 1.0 - mean_sim
+    # Zero-variance clusters have no discriminating pattern; assign diversity=0
+    diversity[zero_var_mask] = 0.0
+    return diversity  # higher = more novel; caller normalizes to [0, 1]
 
 
 def _reduce_score(scores_per_test: ScoresPerTest) -> float:
