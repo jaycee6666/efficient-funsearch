@@ -23,6 +23,19 @@ from implementation import evaluator, sampler
 
 
 @dataclasses.dataclass(frozen=True)
+class DiversityConfig:
+    """Configuration for Phase 3 diversity-guided cluster selection.
+
+    When enabled, Island.get_prompt() biases toward novel clusters:
+        combined = norm_perf + beta * norm_div
+    where beta decays linearly from beta_init to 0 over beta_decay_period programs.
+    """
+    enabled: bool = True
+    beta_init: float = 0.3
+    beta_decay_period: int = 350
+
+
+@dataclasses.dataclass(frozen=True)
 class ProgramsDatabaseConfig:
     """Configuration of a ProgramsDatabase.
 
@@ -56,7 +69,9 @@ class Config:
           can execute in parallel as part of a distributed system.
       samples_per_prompt: How many independently sampled program continuations to
           obtain for each prompt.
-      dedup: Phase 2 dedup configuration (None means dedup is disabled)
+      dedup: Phase 2 dedup configuration (None means dedup is disabled).
+      diversity: Phase 3 diversity-guided selection configuration
+          (None means diversity is disabled; DiversityConfig instance enables it).
     """
     programs_database: ProgramsDatabaseConfig = dataclasses.field(default_factory=ProgramsDatabaseConfig)
     num_samplers: int = 1  # RZ: I just use one samplers
@@ -65,6 +80,7 @@ class Config:
     samples_per_prompt: int = 4
     evaluate_timeout_seconds: int = 30  # RZ: add timeout seconds
     dedup: Any = None  # Phase 2: DedupConfig instance or None
+    diversity: Any = None  # Phase 3: DiversityConfig instance or None
 
 
 @dataclasses.dataclass()

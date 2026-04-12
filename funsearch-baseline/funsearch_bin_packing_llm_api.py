@@ -20,6 +20,19 @@ from implementation import (
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 
+def _build_per_instance_inputs(dataset: dict[str, dict[str, Any]]) -> dict[str, dict[str, dict[str, Any]]]:
+    """Wrap each bin-packing instance as its own top-level test input.
+
+    FunSearch records one score per top-level input key. Splitting OR3 into
+    per-instance inputs makes cluster signatures reflect the full score pattern
+    across instances instead of collapsing to a single averaged scalar.
+    """
+    return {
+        instance_name: {instance_name: instance}
+        for instance_name, instance in dataset.items()
+    }
+
+
 def _trim_preface_of_body(sample: str) -> str:
     """Trim the redundant descriptions/symbols/'def' declaration before the function body.
     Please see my comments in sampler.LLM (in sampler.py).
@@ -292,22 +305,41 @@ def priority(item: float, bins: np.ndarray) -> np.ndarray:
 # Because the inner code uses multiprocess evaluation.
 if __name__ == '__main__':
     # Phase 2: Import dedup config (can be disabled via env var DEDUP_ENABLED=0)
+    DEDUP_ENABLED = os.environ.get('DEDUP_ENABLED', '1') != '0'
     dedup_config = None
-    if os.environ.get('DEDUP_ENABLED', '1') != '0':
+    if DEDUP_ENABLED:
         try:
             from src.dedup.dedup_config import DedupConfig
             dedup_config = DedupConfig(enabled=True)
         except ImportError:
             print("[Warning] src.dedup not found, disabling dedup")
+            DEDUP_ENABLED = False
+
+    # Phase 3: Diversity-guided selection (optional)
+    DIVERSITY_ENABLED = os.environ.get('DIVERSITY_ENABLED', '0') == '1'
+    diversity_config = None
+    if DIVERSITY_ENABLED:
+        try:
+            from implementation.config import DiversityConfig
+            diversity_config = DiversityConfig(
+                enabled=True,
+                beta_init=float(os.environ.get('DIVERSITY_BETA_INIT', '0.3')),
+                beta_decay_period=int(os.environ.get('DIVERSITY_BETA_DECAY', '350')),
+            )
+            print(f"[Config] Diversity-guided selection enabled: {diversity_config}")
+        except Exception as e:
+            print(f"[Config] Failed to create DiversityConfig, disabling diversity: {e}")
+            DIVERSITY_ENABLED = False
 
     class_config = config.ClassConfig(llm_class=LLMAPI, sandbox_class=Sandbox)
     config = config.Config(
         samples_per_prompt=4,
         evaluate_timeout_seconds=30,
         dedup=dedup_config,  # Phase 2: Pass dedup config
+        diversity=diversity_config,
     )
 
-    bin_packing_or3 = {'OR3': bin_packing_utils.datasets['OR3']}
+    bin_packing_or3 = _build_per_instance_inputs(bin_packing_utils.datasets['OR3'])
     # --- 15-sample small-scale validation (passed, Round 2 dedup rate 50%, best=-232.95) ---
     # global_max_sample_num = 16
     # funsearch.main(
@@ -319,6 +351,15 @@ if __name__ == '__main__':
     #     log_dir='logs/dedup_15samples_v2',
     # )
 
+    log_dir = os.environ.get('LOG_DIR', None)
+    if log_dir is None:
+        if DIVERSITY_ENABLED:
+            log_dir = 'logs/diversity_50samples'
+        elif DEDUP_ENABLED:
+            log_dir = 'logs/dedup_50samples_v2'
+        else:
+            log_dir = 'logs/baseline_50samples'
+
     global_max_sample_num = 51  # Counter starts from 1, so set 51 to actually generate 50 LLM samples
     funsearch.main(
         specification=specification,
@@ -326,5 +367,5 @@ if __name__ == '__main__':
         config=config,
         max_sample_nums=global_max_sample_num,
         class_config=class_config,
-        log_dir='logs/dedup_50samples_v2',
+        log_dir=log_dir,
     )
