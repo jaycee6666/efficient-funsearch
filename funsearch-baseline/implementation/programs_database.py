@@ -61,21 +61,37 @@ def _normalize_scores(scores: np.ndarray) -> np.ndarray:
 
 
 def _compute_diversity_scores(signatures: list) -> np.ndarray:
-    """Compute diversity score for each cluster as mean Euclidean distance to others.
+    """Compute diversity score for each cluster using row-centered cosine distance.
 
-    Uses pairwise Euclidean distance between cluster signatures.
-    Returns an array of shape (n,) with values >= 0.
-    Returns zeros if fewer than 2 clusters (no comparison possible).
+    Row-centering removes the effect of absolute score level, so diversity captures
+    relative performance patterns across test instances rather than overall score
+    magnitude. This prevents semantic overlap with the performance term in
+    combined = norm_perf + beta * norm_div.
+
+    Example: (-100,-200) vs (-200,-400) are proportionally equivalent -> diversity=0.
+    Example: (-100,-400) vs (-400,-100) have opposite patterns -> diversity=2 (max).
+
+    Returns an array of shape (n,) in [0, 2]. Clusters with near-zero variance
+    across test instances are treated as maximally similar (zero diversity).
+    Returns zeros if fewer than 2 clusters.
     """
     n = len(signatures)
     if n < 2:
         return np.zeros(n)
 
     sig_matrix = np.array([list(sig) for sig in signatures], dtype=np.float64)
-    diff = sig_matrix[:, np.newaxis, :] - sig_matrix[np.newaxis, :, :]  # (n, n, d)
-    dist_matrix = np.sqrt((diff ** 2).sum(axis=2))  # (n, n), diagonal = 0.0
-    mean_dist = dist_matrix.sum(axis=1) / (n - 1)
-    return mean_dist  # higher = more novel; caller normalizes to [0, 1]
+    # Subtract per-cluster mean so diversity reflects relative pattern, not absolute level
+    row_means = sig_matrix.mean(axis=1, keepdims=True)
+    centered = sig_matrix - row_means
+    # Normalize rows; if a cluster scores identically on all tests, treat as no pattern
+    norms = np.linalg.norm(centered, axis=1, keepdims=True)
+    norms = np.where(norms < 1e-8, 1.0, norms)
+    sig_norm = centered / norms
+    # Pairwise cosine similarity, then convert to distance in [0, 2]
+    sim_matrix = sig_norm @ sig_norm.T
+    np.fill_diagonal(sim_matrix, 0.0)
+    mean_sim = sim_matrix.sum(axis=1) / (n - 1)
+    return 1.0 - mean_sim  # higher = more novel; caller normalizes to [0, 1]
 
 
 def _reduce_score(scores_per_test: ScoresPerTest) -> float:

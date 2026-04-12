@@ -42,12 +42,23 @@ class TestComputeDiversityScores:
         assert result[1] == pytest.approx(0.0, abs=1e-6)
 
     def test_orthogonal_clusters_have_max_diversity(self):
-        # Two clusters whose signatures are orthogonal vectors
+        # (1,0) centered -> (0.5,-0.5) normalized -> (1/sqrt2, -1/sqrt2)
+        # (0,1) centered -> (-0.5,0.5) normalized -> (-1/sqrt2, 1/sqrt2)
+        # After centering these are anti-correlated: cosine_sim = -1, distance = 2.0
         sigs = [(1.0, 0.0), (0.0, 1.0)]
         result = _compute_diversity_scores(sigs)
-        # Euclidean distance between (1,0) and (0,1) = sqrt(2)
-        assert result[0] == pytest.approx(np.sqrt(2), abs=1e-6)
-        assert result[1] == pytest.approx(np.sqrt(2), abs=1e-6)
+        assert result[0] == pytest.approx(2.0, abs=1e-6)
+        assert result[1] == pytest.approx(2.0, abs=1e-6)
+
+    def test_proportional_clusters_have_zero_diversity(self):
+        # (-100,-200) and (-200,-400) have the same relative pattern (scaled versions)
+        # Centering: (-100,-200) -> mean=-150 -> (50,-50) normalized -> (1/sqrt2,-1/sqrt2)
+        #            (-200,-400) -> mean=-300 -> (100,-100) normalized -> (1/sqrt2,-1/sqrt2)
+        # cosine_sim = 1.0, distance = 0.0
+        sigs = [(-100.0, -200.0), (-200.0, -400.0)]
+        result = _compute_diversity_scores(sigs)
+        assert result[0] == pytest.approx(0.0, abs=1e-6)
+        assert result[1] == pytest.approx(0.0, abs=1e-6)
 
     def test_diverse_cluster_gets_higher_score(self):
         # sigs[2] is very different from sigs[0] and sigs[1] which are similar
