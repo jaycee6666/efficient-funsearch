@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import os
 import profile
 import time
 from abc import ABC, abstractmethod
@@ -205,6 +206,16 @@ class Evaluator:
                     profiler.register_function(new_function)
                 return  # Skip all subsequent Sandbox evaluation
         # ========== End of dedup check ==========
+
+        # Export behavioral fingerprint for offline BCR analysis (enabled via EXPORT_FINGERPRINTS=1)
+        if (os.environ.get('EXPORT_FINGERPRINTS') == '1'
+                and self._dedup_filter is not None
+                and dedup_result.fingerprint is not None):
+            _log_dir = os.environ.get('LOG_DIR', 'logs')
+            os.makedirs(_log_dir, exist_ok=True)
+            _fp_str = ','.join(map(str, dedup_result.fingerprint))
+            with open(os.path.join(_log_dir, 'fingerprints.csv'), 'a') as _fp_file:
+                _fp_file.write(f"{kwargs.get('global_sample_nums', 0)},{_fp_str}\n")
 
         # Phase 2: Dedup passed, set default fields
         if self._dedup_filter is not None:

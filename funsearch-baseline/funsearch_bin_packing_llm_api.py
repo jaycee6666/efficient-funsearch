@@ -360,7 +360,7 @@ if __name__ == '__main__':
         else:
             log_dir = 'logs/baseline_50samples'
 
-    global_max_sample_num = 51  # Counter starts from 1, so set 51 to actually generate 50 LLM samples
+    global_max_sample_num = 151  # Counter starts from 1, so set 151 to actually generate 150 LLM samples
     funsearch.main(
         specification=specification,
         inputs=bin_packing_or3,
