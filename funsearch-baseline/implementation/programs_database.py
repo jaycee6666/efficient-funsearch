@@ -154,6 +154,7 @@ class ProgramsDatabase:
             template: code_manipulation.Program,
             function_to_evolve: str,
             diversity_config=None,
+            reflection_store=None,  # S4: ReflectionStore instance or None
     ) -> None:
         self._config: config_lib.ProgramsDatabaseConfig = config
         self._template: code_manipulation.Program = template
@@ -161,6 +162,7 @@ class ProgramsDatabase:
 
         # Initialize empty islands.
         self._diversity_config = diversity_config
+        self._reflection_store = reflection_store  # S4: strategy reflections
         self._islands: list[Island] = []
         for _ in range(config.num_islands):
             self._islands.append(
@@ -181,6 +183,14 @@ class ProgramsDatabase:
         """Returns a prompt containing implementations from one chosen island."""
         island_id = np.random.randint(len(self._islands))
         code, version_generated = self._islands[island_id].get_prompt()
+        # S4: Append top strategy reflections as comments to guide the LLM
+        if self._reflection_store is not None and len(self._reflection_store) > 0:
+            reflections = self._reflection_store.get_top_reflections(k=3)
+            if reflections:
+                hints = '\n'.join(
+                    f'# - Score {score:.2f}: {text}' for score, text in reflections
+                )
+                code = code + f'\n# Strategy insights from top-performing programs:\n{hints}\n'
         return Prompt(code, version_generated, island_id)
 
     def _register_program_in_island(

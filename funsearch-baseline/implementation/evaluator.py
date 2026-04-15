@@ -154,6 +154,7 @@ class Evaluator:
             timeout_seconds: int = 30,
             sandbox_class: Type[Sandbox] = Sandbox,
             dedup_filter=None,  # Phase 2: Behavioral dedup filter (DedupFilter instance or None)
+            reflection_fn=None,  # S4: callable(body: str, score: float) -> None, or None
     ):
         self._database = database
         self._template = template
@@ -163,6 +164,7 @@ class Evaluator:
         self._timeout_seconds = timeout_seconds
         self._sandbox = sandbox_class()
         self._dedup_filter = dedup_filter  # Phase 2: Dedup filter
+        self._reflection_fn = reflection_fn  # S4: ReEvo reflection callable (optional)
 
     def analyse(
             self,
@@ -256,6 +258,13 @@ class Evaluator:
                 **kwargs,
                 evaluate_time=evaluate_time
             )
+            # S4: Request strategy reflection for accepted programs (non-blocking)
+            if self._reflection_fn is not None:
+                try:
+                    score = sum(scores_per_test.values()) / len(scores_per_test)
+                    self._reflection_fn(new_function.body, score)
+                except Exception:
+                    pass  # reflection failure must never affect the main search loop
         else:
             profiler: profile.Profiler = kwargs.get('profiler', None)
             if profiler:

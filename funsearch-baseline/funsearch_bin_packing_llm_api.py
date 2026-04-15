@@ -315,6 +315,53 @@ if __name__ == '__main__':
             print("[Warning] src.dedup not found, disabling dedup")
             DEDUP_ENABLED = False
 
+    # S4: ReEvo reflective evolution (optional)
+    REEVO_ENABLED = os.environ.get('REEVO_ENABLED', '0') == '1'
+    reflection_store = None
+    reflection_fn = None
+    if REEVO_ENABLED:
+        try:
+            from src.reevo.reflection_store import ReflectionStore
+            reflection_store = ReflectionStore(max_reflections=20)
+
+            def _make_reflection_fn(store):
+                def _reflection_fn(body: str, score: float) -> None:
+                    prompt = (
+                        f"The following Python function is a heuristic for online bin packing. "
+                        f"It scored {score:.2f} (higher is better; optimal is around -200).\n\n"
+                        f"```python\n{body.strip()}\n```\n\n"
+                        f"In 1-2 sentences, describe the algorithmic strategy this function uses "
+                        f"and how it differs from a simple greedy approach. Be concise."
+                    )
+                    api_base = os.environ.get('API_BASE', 'api.bltcy.ai')
+                    api_key = os.environ['API_KEY']
+                    api_model = os.environ.get('API_MODEL', 'gpt-5-nano')
+                    conn = http.client.HTTPSConnection(api_base, timeout=30)
+                    payload = json.dumps({
+                        "max_tokens": 150,
+                        "model": api_model,
+                        "messages": [{"role": "user", "content": prompt}],
+                    })
+                    headers = {
+                        'Authorization': f'Bearer {api_key}',
+                        'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
+                        'Content-Type': 'application/json',
+                    }
+                    conn.request("POST", "/v1/chat/completions", payload, headers)
+                    res = conn.getresponse()
+                    data = json.loads(res.read().decode("utf-8"))
+                    if 'choices' in data:
+                        reflection = data['choices'][0]['message']['content'].strip()
+                        store.add(body, score, reflection)
+                        print(f"[ReEvo] Reflection stored (score={score:.2f}): {reflection[:80]}")
+                return _reflection_fn
+
+            reflection_fn = _make_reflection_fn(reflection_store)
+            print("[Config] ReEvo reflective evolution enabled")
+        except Exception as e:
+            print(f"[Config] Failed to initialize ReEvo, disabling: {e}")
+            REEVO_ENABLED = False
+
     # Phase 3: Diversity-guided selection (optional)
     DIVERSITY_ENABLED = os.environ.get('DIVERSITY_ENABLED', '0') == '1'
     diversity_config = None
@@ -368,4 +415,6 @@ if __name__ == '__main__':
         max_sample_nums=global_max_sample_num,
         class_config=class_config,
         log_dir=log_dir,
+        reflection_store=reflection_store,
+        reflection_fn=reflection_fn,
     )

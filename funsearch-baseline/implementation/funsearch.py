@@ -63,11 +63,16 @@ def main(
     """
     function_to_evolve, function_to_run = _extract_function_names(specification)
     template = code_manipulation.text_to_program(specification)
+    # S4: Extract ReEvo components from kwargs (None when REEVO_ENABLED=0)
+    reflection_store = kwargs.pop('reflection_store', None)
+    reflection_fn = kwargs.pop('reflection_fn', None)
+
     database = programs_database.ProgramsDatabase(
         config.programs_database,
         template,
         function_to_evolve,
         diversity_config=getattr(config, 'diversity', None),
+        reflection_store=reflection_store,
     )
 
     # get log_dir and create profiler
@@ -96,6 +101,9 @@ def main(
               f"(beta_init={config.diversity.beta_init}, "
               f"beta_decay_period={config.diversity.beta_decay_period})")
 
+    if reflection_store is not None:
+        print("[FunSearch] S4 ReEvo reflective evolution enabled")
+
     evaluators = []
     for _ in range(config.num_evaluators):
         evaluators.append(evaluator.Evaluator(
@@ -107,6 +115,7 @@ def main(
             timeout_seconds=config.evaluate_timeout_seconds,
             sandbox_class=class_config.sandbox_class,
             dedup_filter=dedup_filter,
+            reflection_fn=reflection_fn,
         ))
 
     # We send the initial implementation to be analysed by one of the evaluators.
