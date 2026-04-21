@@ -3,6 +3,7 @@ import json
 import multiprocessing
 import os
 import sys
+import time
 from collections.abc import Collection
 from typing import Any
 
@@ -88,14 +89,20 @@ class LLMAPI(sampler.LLM):
 
     def _draw_sample(self, content: str) -> str:
         prompt = '\n'.join([content, self._additional_prompt])
+        # Per-request timeout and max retries guard against indefinite socket hangs.
+        request_timeout = float(os.environ.get('API_TIMEOUT', '60'))
+        max_retries = int(os.environ.get('API_MAX_RETRIES', '5'))
+        attempt = 0
         while True:
+            attempt += 1
+            conn = None
             try:
                 # Read API config from environment variables for easy provider switching
                 api_base = os.environ.get('API_BASE', 'api.bltcy.ai')
                 api_key = os.environ['API_KEY']  # Must be set, otherwise raise error
                 api_model = os.environ.get('API_MODEL', 'gpt-5-nano')
 
-                conn = http.client.HTTPSConnection(api_base)
+                conn = http.client.HTTPSConnection(api_base, timeout=request_timeout)
                 payload = json.dumps({
                     "max_tokens": 4096,  # Reasoning models need many tokens to "think" first; 512 is insufficient
                     "model": api_model,
@@ -116,7 +123,10 @@ class LLMAPI(sampler.LLM):
                 data = res.read().decode("utf-8")
                 data = json.loads(data)
                 if 'choices' not in data:
-                    print(f"[LLMAPI] Unexpected response: {data}")
+                    print(f"[LLMAPI] Unexpected response (attempt {attempt}/{max_retries}): {data}")
+                    if attempt >= max_retries:
+                        raise RuntimeError(f"LLM API returned no 'choices' after {max_retries} attempts")
+                    time.sleep(min(2 ** attempt, 30))
                     continue
                 response = data['choices'][0]['message']['content']
 
@@ -132,8 +142,17 @@ class LLMAPI(sampler.LLM):
                     response = _trim_preface_of_body(response)
                 return response
             except Exception as e:
-                print(f"[LLMAPI] Error in _draw_sample: {e}")
+                print(f"[LLMAPI] Error in _draw_sample (attempt {attempt}/{max_retries}): {e}")
+                if attempt >= max_retries:
+                    raise RuntimeError(f"LLM API failed after {max_retries} attempts: {e}") from e
+                time.sleep(min(2 ** attempt, 30))
                 continue
+            finally:
+                if conn is not None:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
 
 
 class Sandbox(evaluator.Sandbox):
