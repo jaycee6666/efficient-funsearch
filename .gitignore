@@ -66,3 +66,15 @@ Thumbs.db
 # Project specific
 *.pdf
 !docs/*.pdf
+!docs/report/main.pdf
+!docs/report/figures/*.pdf
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
