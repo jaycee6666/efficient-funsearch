@@ -18,7 +18,7 @@ Selection for Sample-Efficient FunSearch}
 
 \author{CHEN Sijie (59872908) \& BIAN Wenbo (59872472) \\
 Department of Computer Science, City University of Hong Kong \\
-\texttt{\{sijiechan2,wbian9\}-c@my.cityu.edu.hk}}
+\texttt{sijiechan2-c@my.cityu.edu.hk}, \texttt{wbian9-c@my.cityu.edu.hk}}
 
 \iclrfinalcopy
 \begin{document}
@@ -27,8 +27,9 @@ Department of Computer Science, City University of Hong Kong \\
 \begin{abstract}
 We propose \textbf{behavioral-fingerprint deduplication} for FunSearch, an LLM-driven
 evolutionary program search framework. LLM proposers repeatedly produce functionally
-equivalent heuristics: on an unmodified run we observe a $45\%$ natural duplicate rate,
-wasting costly API calls and sandbox evaluations.
+equivalent heuristics: on an unmodified run we observe $45\%$ of proposals scoring
+identically to an ancestor---a conservative proxy for behavioural redundancy that
+wastes costly API calls and sandbox evaluations.
 Our method executes each candidate on ten lightweight probing instances, hashes the
 resulting $375$-dimensional decision sequence, and rejects exact matches before full
 evaluation; we further integrate filter-level diversity and ReEvo reflective evolution
@@ -60,8 +61,10 @@ but how many LLM calls it takes.
 
 Our preliminary baseline exposes a concrete waste source. Running unmodified FunSearch
 on the OR3 instance set for $53$ samples, $45\%$ of all programs produced scores
-\emph{identical} to programs already in the archive, indicating a high rate of
-behaviourally redundant proposals that syntactic hashing does not catch. This matches
+\emph{identical} to programs already in the archive---a conservative proxy for
+behavioural redundancy (same score need not imply same per-item decision sequence,
+but the converse holds) that syntactic hashing does not catch, and which the
+$375$-dimensional fingerprint introduced in \S\ref{sec:method} verifies directly. This matches
 the open direction identified by \citet{vanstein2025llm}, who argue that niching and
 portfolio-style behavioural analysis are under-explored in LLM-driven
 meta-heuristics. Existing FunSearch variants do not deduplicate at the behavioural
@@ -222,16 +225,26 @@ with van Stein et al.'s runtime-trajectory definition \citep{vanstein2025llm}.
 \subsection{Setup}
 \label{sec:setup}
 
-All experiments use OR-Library OR3 for evaluation and Weibull-5k as auxiliary data,
-following the FunSearch evaluation protocol \citep{romera2023mathematical}. The LLM
+\textbf{Task.} Online bin packing (OBP) receives items $s_1, s_2, \dots$ one at a
+time and must assign each to a bin irrevocably on arrival; the heuristic $h$ scores
+every open bin and places the item in the highest-scoring feasible one (or opens a
+new bin). The score reported in this paper is
+$-\tfrac{1}{|\mathcal{D}|}\sum_{d\in\mathcal{D}} \mathrm{bins\_used}(h, d)$, i.e.,
+the negated mean number of bins used over $|\mathcal{D}|{=}20$ OR3 files
+(\texttt{u500\_00}--\texttt{u500\_19}, each $500$ items, capacity $150$); higher is
+better. The L1 lower bound $\lceil\sum s_i/C\rceil$ averages to $-201.2$ on OR3, so
+a score of $-209.66$ corresponds to $\sim 8.5$ bins above the theoretical minimum.
+All experiments use OR3 for evaluation and Weibull-5k as auxiliary data, following
+the FunSearch evaluation protocol \citep{romera2023mathematical}. The LLM
 proposer is \texttt{gpt-5-nano} via the course API, with $10$ islands, $4$
 samples-per-prompt, and a $30$\,s sandbox timeout. Each run is capped at $150$ LLM
 samples --- well below the $20{,}000$-call budget --- to keep the comparison within
 the ``low-sample regime'' studied by \citet{ye2024reevo}. We evaluate four
 conditions: \textit{baseline} (unmodified FunSearch, $n{=}2$), \textit{dedup}
 (fingerprint funnel only, $n{=}4$), \textit{dedup+div} (funnel plus filter-level
-diversity, $n{=}4$), and \textit{reevo} (funnel plus ReEvo reflection, $n{=}4$). Total
-API usage across all runs is $\sim 2{,}100$ calls.
+diversity, $n{=}4$), and \textit{reevo} (funnel + filter-level diversity + ReEvo
+reflection stacked, $n{=}4$; reflection-only is not separately ablated---see
+\S\ref{sec:lim}~\#6). Total API usage across all runs is $\sim 2{,}100$ calls.
 
 \subsection{Main Results}
 \label{sec:results}
@@ -272,16 +285,18 @@ consumes before the run's best program is discovered. The best score itself is
 unchanged ($-210.52\to -210.04$).
 
 \textbf{(O2) No observable performance degradation.} All four conditions have best
-scores in $-210\pm 1$. We therefore conclude that, on this budget, neither
-deduplication, filter-level diversity, nor reflection imposes a measurable
-best-score cost --- a finding that is consistent with (but, per \S\ref{sec:disc}
-Insight~2, does not directly verify) a low false-positive rate on the full input
-distribution.
+scores in $-210\pm 1$. At this budget and sample size ($n{=}2$--$4$) we observe no
+measurable best-score cost from deduplication, filter-level diversity, or reflection
+--- an observation consistent with (but, per \S\ref{sec:disc} Insight~2, not a direct
+verification of) a low false-positive rate on the full input distribution.
 
-\textbf{(O3) ReEvo is the lowest-variance condition.} ReEvo is the only condition
-whose mean is below $-210$ ($-209.66 \pm 0.59$). This is consistent with the
-landscape-smoothing mechanism attributed to reflection by \citet{ye2024reevo}. We
-avoid strong causal claims, since $n{=}4$ is insufficient for significance testing.
+\textbf{(O3) Full stack yields the lowest variance.} The \textit{reevo} condition
+(dedup $+$ diversity $+$ reflection) is the only one whose mean is below $-210$
+($-209.66 \pm 0.59$). This is qualitatively consistent with the landscape-smoothing
+effect reported for reflection by \citet{ye2024reevo}, but because reflection is
+stacked on top of dedup and filter-level diversity in these runs, we cannot
+separately attribute the improvement to reflection; $n{=}4$ is also insufficient for
+significance testing.
 
 \textbf{(O4) Dup rates decrease with extra signals.} Among dedup-equipped conditions,
 the rejection rate drops from $0.401$ (dedup) to $0.342$ (dedup+div) to $0.314$
@@ -297,19 +312,22 @@ identical-score counts.)
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.65\linewidth]{bcr_curves.pdf}
-\caption{Behavioural Coverage Rate over sample index. Dedup-only (blue) reaches
-full coverage (BCR$=1$) at sample $51$; Dedup+Div (orange) reaches full coverage at
-sample $65$. Only these two conditions export fingerprints in the current run set.}
+\caption{Behavioural Coverage Rate over sample index (exploratory; $n{=}1$ per
+condition). Dedup-only (blue) reaches full coverage (BCR$=1$) at sample $51$;
+Dedup+Div (orange) reaches full coverage at sample $65$. Only these two conditions
+export fingerprints in the current run set.}
 \label{fig:bcr}
 \end{figure}
 
-Figure~\ref{fig:bcr} plots BCR$(t)$ for the two fingerprint-exporting conditions:
+Figure~\ref{fig:bcr} plots BCR$(t)$ for the two fingerprint-exporting conditions
+($n{=}1$ each; this is exploratory rather than a mechanism claim):
 Dedup-only reaches $\mathrm{BCR}=1.0$ at sample $51$, whereas Dedup+Div takes until
-sample $65$. \textbf{Reverse-intuitive finding:} filter-level diversity \emph{slows}
-cluster visitation. Once duplicates are filtered, retained samples are already
-diverse by construction; the extra diversity constraint then over-constrains the
-proposer, concentrating exploration within already-reached clusters. This exposes a
-mechanism-level difference not visible in the best-score curve
+sample $65$. \textbf{Reverse-intuitive observation:} under this single pair of runs,
+filter-level diversity appears to \emph{slow} cluster visitation. A plausible
+reading is that once duplicates are filtered, retained samples are already diverse
+by construction, so the extra diversity constraint concentrates exploration within
+already-reached clusters rather than reaching new ones; confirming this would
+require multi-seed replication at the same $n$ used for the main table
 \citep{vanstein2025llm}.
 
 \subsection{Fingerprint Space Visualisation}
@@ -367,10 +385,12 @@ equivalence (\S\ref{sec:lim}~\#4); the practical takeaway is that discrete
 measures (Hamming/edit distance) or learned metrics are prerequisites for any
 high-dimensional behavioural similarity filter.
 
-\textbf{Reflection consistent with landscape smoothing.} ReEvo's low mean
-($-209.66$) and low variance ($0.59$), together with the late-breakthrough pattern
-(\S\ref{sec:breakthrough-exp}), are qualitatively consistent with
-\citet{ye2024reevo}'s landscape-smoothing mechanism; $n{=}4$ precludes a causal claim.
+\textbf{Reflection-plus-stack consistent with landscape smoothing.} The full-stack
+condition's low mean ($-209.66$) and low variance ($0.59$), together with the
+late-breakthrough pattern (\S\ref{sec:breakthrough-exp}), are qualitatively
+consistent with \citet{ye2024reevo}'s landscape-smoothing mechanism. Because
+reflection runs with dedup and diversity both active, we cannot isolate its
+contribution here; $n{=}4$ further precludes a causal claim.
 
 \section{Related Work}
 \label{sec:related}
@@ -402,7 +422,12 @@ production use should route probing through the forked sandbox.
 ($\mathrm{Perf}+\beta\cdot\mathrm{Div}$) is future work.
 \textbf{(4) Probe generalisation:} $375$-decision fingerprint equivalence is
 not verified end-to-end on the full OR3 distribution (O2 is indirect evidence).
-\textbf{(5) BCR/t-SNE scope:} Dedup and Dedup+Div only.
+\textbf{(5) BCR/t-SNE scope:} Dedup and Dedup+Div only, $n{=}1$ per condition
+(exploratory rather than a mechanism claim).
+\textbf{(6) Reflection-only not ablated:} the \textit{reevo} condition runs
+reflection on top of dedup and filter-level diversity, so ReEvo's contribution
+cannot be isolated here; a reflection-only run (\texttt{REEVO\_ENABLED=1,
+DIVERSITY\_ENABLED=0}) is deferred to follow-up work.
 
 \section{Conclusion}
 \label{sec:conc}
