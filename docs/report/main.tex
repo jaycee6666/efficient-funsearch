@@ -36,12 +36,12 @@ evaluation; we further integrate filter-level diversity and ReEvo reflective evo
 \citep{ye2024reevo} into the same pipeline.
 On OR3 online bin packing under a $150$-sample budget, deduplication alone reduces
 \emph{samples-to-best} by $38\%$ ($146\to 90$) without degrading the best score. An
-offline \textbf{Behavioural Coverage Rate (BCR)} analysis---introduced as a lightweight
-tool for characterising exploration behaviour---shows the reverse-intuitive finding that
-deduplication \emph{alone} drives broader behavioural coverage than deduplication
-combined with filter-level diversity. Adding ReEvo on top yields the lowest-variance
-condition in our runs (mean $-209.66$, std $0.59$, $n{=}4$), consistent with the
-landscape-smoothing mechanism reported by \citet{ye2024reevo}.%
+offline \textbf{Behavioural Coverage Rate (BCR)} analysis ($n{=}1$ per condition,
+exploratory) suggests that deduplication alone may reach broader behavioural coverage
+than deduplication combined with filter-level diversity---a hypothesis flagged for
+multi-seed follow-up. Adding ReEvo on top of deduplication and filter-level diversity
+yields the lowest-variance condition in our runs (mean $-209.66$, std $0.59$, $n{=}4$),
+consistent with the landscape-smoothing mechanism reported by \citet{ye2024reevo}.%
 \footnote{Reproducibility: \url{https://colab.research.google.com/github/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_colab.ipynb}.}
 \end{abstract}
 
@@ -76,15 +76,16 @@ a disabled cosine layer), inspired by ReEvo's F-value deduplication
 \citep{ye2024reevo} but lifted to the behaviour level; on OR3 under a $150$-sample
 budget it reduces \emph{samples-to-best} by $38\%$ without degrading best score.
 \textbf{(Extension)} We integrate filter-level diversity and ReEvo reflective
-evolution on top of deduplication inside the same pipeline and characterise their
-marginal effects (the complete
-$\mathrm{Score}(c)=\mathrm{Perf}(c)+\beta\cdot\mathrm{Div}(c)$ cluster scoring is
-future work). \textbf{(Tool)} An offline \textbf{Behavioural Coverage Rate} (BCR)
-metric inspired by MAP-Elites \citep{mouret2015illuminating} reveals that
-deduplication alone reaches full behavioural coverage faster than deduplication
-combined with filter-level diversity. Together these findings suggest that, at the
-behaviour level, \emph{removing redundancy} and \emph{promoting novelty} are not
-simply additive \citep{vanstein2025llm}.
+evolution on top of deduplication inside the same pipeline and analyse their
+stacked behaviour; reflection-only is not separately ablated (\S\ref{sec:lim}~\#6),
+and the complete $\mathrm{Score}(c)=\mathrm{Perf}(c)+\beta\cdot\mathrm{Div}(c)$
+cluster scoring is future work. \textbf{(Tool)} We introduce an offline \textbf{Behavioural Coverage Rate} (BCR)
+metric inspired by MAP-Elites \citep{mouret2015illuminating}; on an exploratory
+pair of runs ($n{=}1$ per condition) it suggests that deduplication alone may
+reach full behavioural coverage faster than deduplication combined with
+filter-level diversity, consistent with the view that at the behaviour level
+\emph{removing redundancy} and \emph{promoting novelty} may not be simply additive
+\citep{vanstein2025llm}.
 
 \section{Method}
 \label{sec:method}
@@ -298,13 +299,15 @@ stacked on top of dedup and filter-level diversity in these runs, we cannot
 separately attribute the improvement to reflection; $n{=}4$ is also insufficient for
 significance testing.
 
-\textbf{(O4) Dup rates decrease with extra signals.} Among dedup-equipped conditions,
-the rejection rate drops from $0.401$ (dedup) to $0.342$ (dedup+div) to $0.314$
-(reevo), indicating that filter-level diversity and reflection push the LLM toward
-genuinely new behaviours relative to the archive. (We do not include baseline in this
-trend because it does not route candidates through the dedup filter; the $45\%$
-natural duplicate rate mentioned in \S\ref{sec:intro} is computed independently on
-identical-score counts.)
+\textbf{(O4) Dup rates decrease as extra signals are added.} Among dedup-equipped
+conditions, the rejection rate drops from $0.401$ (dedup) to $0.342$ (dedup+div) to
+$0.314$ (reevo). Because the archive distribution and prompt context co-vary across
+these conditions (stronger signals also change which programs survive into the
+archive), we read this as a correlational observation rather than evidence that
+diversity or reflection causally pushes the LLM toward new behaviours. (We do not
+include baseline in this trend because it does not route candidates through the
+dedup filter; the $45\%$ natural duplicate rate mentioned in \S\ref{sec:intro} is
+computed independently on identical-score counts.)
 
 \subsection{Behavioural Coverage Analysis}
 \label{sec:bcr-exp}
@@ -367,13 +370,15 @@ before it can inform the proposer. $n{=}4$ precludes a causal claim.
 \section{Discussion}
 \label{sec:disc}
 
-\textbf{Deduplication subsumes first-order diversity.} The $38\%$ samples-to-best
-reduction and the BCR curves together show that removing behavioural redundancy
-already delivers the exploration effect that explicit diversity mechanisms target;
-stacking filter-level diversity on top slows cluster visitation and spreads points
-within clusters rather than reaching new ones. This echoes Novelty
-Search's observation that penalising redundancy can substitute for rewarding
-novelty directly \citep{lehman2011novelty}.
+\textbf{Dedup may subsume first-order diversity.} The $38\%$ samples-to-best
+reduction together with the exploratory BCR curves ($n{=}1$ per condition) are
+consistent with the hypothesis that removing behavioural redundancy already
+delivers much of the exploration effect that explicit diversity mechanisms target,
+and that stacking filter-level diversity on top can in fact slow cluster
+visitation, spreading points within already-reached clusters rather than reaching
+new ones. This would echo Novelty Search's observation that penalising redundancy
+can substitute for rewarding novelty directly \citep{lehman2011novelty};
+confirming it requires multi-seed replication.
 
 \textbf{Cosine on discrete decision vectors is degenerate.} On $53$ calibration
 programs, $98.5\%$ of genuinely different fingerprint pairs had cosine
@@ -412,6 +417,18 @@ Stein et al.~\citep{vanstein2025llm} advocate behaviour-space analysis for
 LLM-driven meta-heuristics via runtime trajectories; our fingerprint uses probe
 decisions as a different behavioural proxy.
 
+\textbf{Duplicate suppression and semantic equivalence.} Program-search systems
+commonly deduplicate \emph{syntactically} via AST-normalised hashing (as in
+FunSearch's default loop \citep{romera2023mathematical}), which misses renamings
+and arithmetic rewrites. Deciding \emph{semantic} equivalence is undecidable in
+general; testing-based equivalence---executing candidates on a fixed probing
+suite and comparing outputs---sits between these extremes and is closely related
+to output-caching of deterministic LLM calls. Our funnel instantiates this middle
+ground: the $375$-dim fingerprint hashes \emph{per-item placement decisions} on a
+fixed probing suite, so it detects behaviourally equivalent programs that differ
+syntactically, while remaining a coarse-grained proxy rather than a full
+input-output cache over the target distribution.
+
 \section{Limitations}
 \label{sec:lim}
 
@@ -433,10 +450,12 @@ DIVERSITY\_ENABLED=0}) is deferred to follow-up work.
 \label{sec:conc}
 
 Behavioural-fingerprint deduplication cuts FunSearch's samples-to-best by $38\%$ on
-OR3 online bin packing without degrading best score; BCR analysis reveals that
-filter-level diversity \emph{slows} cluster coverage, while ReEvo gives the
-lowest-variance condition, consistent with landscape smoothing. Future work:
-adaptive-$\beta$ cluster scoring and larger sample budgets.
+OR3 online bin packing without degrading best score. Exploratory BCR analysis
+($n{=}1$ per condition) suggests that filter-level diversity \emph{may} slow
+cluster coverage, and the full stack with ReEvo gives the lowest-variance condition
+in our $n{=}4$ runs, consistent with landscape smoothing. Future work:
+adaptive-$\beta$ cluster scoring, a reflection-only ablation, and larger sample
+budgets for significance testing.
 
 \bibliography{final}
 \bibliographystyle{iclr2024_conference}
