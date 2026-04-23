@@ -67,6 +67,8 @@ funsearch-baseline/logs/**/.DS_Store
 .ropeproject/
 .coverage*
 PUSH_TO_GITHUB.sh
+.specify/
+specs/
 
 # OS
 .DS_Store

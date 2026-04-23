@@ -40,9 +40,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_REPO/efficient_funsearch"
-Documentation = "https://github.com/YOUR_REPO/efficient_funsearch#readme"
-Repository = "https://github.com/YOUR_REPO/efficient_funsearch"
+Homepage = "https://github.com/jaycee6666/efficient-funsearch"
+Documentation = "https://github.com/jaycee6666/efficient-funsearch#readme"
+Repository = "https://github.com/jaycee6666/efficient-funsearch"
 
 [tool.setuptools.packages.find]
 where = ["."]
