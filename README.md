@@ -87,6 +87,17 @@ scripts/
 tests/                            # Unit and integration tests
 ```
 
+## Research Trail
+
+For readers interested in the design history and phase breakdown:
+
+- [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) — overall methodology, the
+  three-level dedup funnel, diversity selection, and final results
+- [`docs/DEVLOG.md`](docs/DEVLOG.md) — chronological development log with
+  key decisions, pitfalls, and bug fixes
+- [`docs/FINAL_SPRINT.md`](docs/FINAL_SPRINT.md) — roadmap of the S1–S6
+  final sprint (BCR, ReEvo, figures, paper)
+
 ## Requirements
 
 - Python **3.9+** (development uses 3.10 via conda env `funsearch`)
