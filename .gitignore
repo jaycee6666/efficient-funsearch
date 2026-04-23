@@ -48,8 +48,17 @@ models/
 .cache/
 
 # Logs
-logs/
+/logs/
 *.log
+
+# funsearch-baseline experiment logs: keep result CSVs for notebook reproduction,
+# exclude per-sample artifacts and tensorboard events
+funsearch-baseline/logs/**/samples/
+funsearch-baseline/logs/**/Legal/
+funsearch-baseline/logs/**/Total Sample/
+funsearch-baseline/logs/**/events.out.tfevents.*
+funsearch-baseline/logs/raw_llm_outputs/
+funsearch-baseline/logs/**/.DS_Store
 
 # Local tool/workspace metadata
 /.opencode/
