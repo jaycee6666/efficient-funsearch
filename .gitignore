@@ -59,6 +59,15 @@ funsearch-baseline/logs/**/Total Sample/
 funsearch-baseline/logs/**/events.out.tfevents.*
 funsearch-baseline/logs/raw_llm_outputs/
 funsearch-baseline/logs/**/.DS_Store
+funsearch-baseline/logs/**/*.bak
+
+# Pre-Final scratch runs (not referenced by notebook or scripts; kept locally only)
+funsearch-baseline/logs/layer1_baseline_run1/
+funsearch-baseline/logs/layer1_baseline_run2/
+funsearch-baseline/logs/layer1_dedup_run1/
+funsearch-baseline/logs/layer1_dedup_run2/
+funsearch-baseline/logs/layer2_dedup_diversity_run1/
+funsearch-baseline/logs/layer2_dedup_diversity_run2/
 
 # Local tool/workspace metadata
 /.opencode/
