@@ -214,6 +214,23 @@ Both new code cells executed cleanly against the checked-in logs; new
 4-condition figure visually matches `docs/figures/convergence_150.pdf`.
 Total notebook size: 32 → 36 cells.
 
+### Apr 26 (later) — P2: BCR live recompute
+
+The BCR cell previously read `docs/figures/bcr_data.csv` directly,
+hiding the k-means step in pre-computed output. Refactored to import
+`load_fingerprints` and `compute_bcr_curve` from
+`scripts/compute_bcr_offline.py` and run k-means (K=8, random_state=42,
+n_init=10) inline on the raw `fingerprints.csv` files.
+
+The recomputed `bcr_df` is **byte-for-byte equivalent** to the
+checked-in CSV — verified at patch time — so all downstream summary
+stats and figures stay identical (dedup reaches full BCR at sample 51;
+dedup+div at sample 65). The cell now also prints the per-condition
+fingerprint counts and the k-means inertia, making the computation
+self-evident without external dependencies.
+
+Notebook + offline pipeline now share one source of truth for BCR.
+
 ---
 
 ## Verification gates (passed for Final)
