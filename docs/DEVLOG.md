@@ -255,6 +255,52 @@ Then `jupyter nbconvert --execute --inplace` over the whole notebook:
 figures, tables) refreshed and stored in the .ipynb so the grader sees
 results without having to run anything.
 
+### Apr 26 (round 2) — notebook ↔ paper consistency pass
+
+Cross-checked notebook narrative against the round-4 paper
+(`docs/report/main.tex`); fixed nine markdown spots where notebook
+text was either factually wrong, conflicted with logs, or used a
+stronger claim than the paper.
+
+Factual corrections (P0):
+- Cell 0: "(~4 s sandbox cycle)" was off by ~2-4×; logs show
+  median 5-6 s, mean 8-16 s, paper §2.2 quotes ~11 s as typical.
+- Cell 6: "~152 (1 seed + 150 LLM-generated)" — every run_log.csv
+  has 153 rows; clarified as "150 LLM samples; 153 rows including
+  seed and bootstrap bookkeeping".
+- Cell 20 #5: "All filtered programs were caught by Level 1, not
+  Level 0" was wrong — every dedup run has 1-5 Level 0 catches
+  (~4% of duplicates). Rewritten as "L1 catches ~95%; L0 catches
+  the remaining 1-5 per run".
+
+Wording aligned with paper (P1):
+- Cell 0: "identical scores on the probing suite" conflated motivation
+  (OR3 score duplicates) with mechanism (probing-suite fingerprint).
+  Now reads "identical OR3 evaluation scores ... fingerprint verifies
+  behavioural equivalence directly".
+- Cell 9: clarified that the 48% (150-sample r1) and the paper's
+  45% (53-sample preliminary) are two different diagnostics pointing
+  at the same phenomenon.
+- Cell 20 #2: "confirming dedup only removes functionally equivalent
+  programs" softened to "consistent with the filter removing only
+  probe-equivalent programs" (paper §3 disclaim).
+- Cell 20 #4: "diversity actively steers the LLM toward novel
+  strategies" softened to "consistent with, but does not prove, a
+  shift in the proposer toward less duplicate output" (paper §3 O4
+  on causality).
+- Cell 26: ReEvo description rewritten to match paper §2.4 verbatim
+  ("describe strategy + how it differs from greedy", "top-3 highest-
+  scoring", "injects them as comments").
+
+Reproduction recipe (P2):
+- Cell 34 step 3: said "BCR cell will pick up new fingerprints
+  automatically", but the cell hard-codes `..._fp/` paths and the
+  optional run cell does not set `EXPORT_FINGERPRINTS=1`. Now spells
+  out the three steps required (set the env var, find the new
+  fingerprints under `LOG_DIR`, edit the BCR cell's `FP_RUNS`).
+
+Re-executed: 0 errors, 0 stderr blocks, 21/21 cells, 36 cells total.
+
 ---
 
 ## Verification gates (passed for Final)
