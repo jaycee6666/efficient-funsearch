@@ -16,7 +16,8 @@ exposed as independent environment-variable switches so any subset can be ablate
    evaluation:
    - **Level 0**: AST normalisation + SHA256 on the rewritten source
    - **Level 1**: 375-dim behavioral fingerprint from 10 probing instances, SHA256 of the
-     decision-sequence tuple (exact match, zero false positives by construction)
+     decision-sequence tuple (exact match — zero false positives **on the fixed probing suite**
+     by construction; full-distribution equivalence is not claimed, see paper §6)
    - **Level 2**: cosine similarity on the fingerprint vector — **disabled** in the final
      configuration because high-dimensional discrete decision vectors collapse to mean
      cosine ≈ 0.989 and produce unacceptable false-positive rates (see paper §2.3 and
@@ -38,7 +39,7 @@ aggregates runs into the summary table reported in the paper.
 | baseline           | −210.52 ± 1.31    | 146 ± 2        | N/A               |
 | dedup              | **−210.04 ± 1.00**| **90 ± 36**    | 0.401 ± 0.046     |
 | dedup + diversity  | −210.20 ± 0.68    | 108 ± 21       | 0.342 ± 0.067     |
-| dedup + ReEvo      | **−209.66 ± 0.59**| 101 ± 16       | **0.314 ± 0.034** |
+| dedup + diversity + ReEvo (full stack) | **−209.66 ± 0.59**| 101 ± 16 | **0.314 ± 0.034** |
 
 Headline takeaways (see paper for full discussion):
 - **Behavioral dedup is the main result.** It yields +0.48 score uplift and 56 samples

@@ -23,6 +23,7 @@ Department of Computer Science, City University of Hong Kong \\
 \iclrfinalcopy
 \begin{document}
 \maketitle
+\lhead{}  % suppress the template's "Published as ICLR 2024" running header for this course submission
 
 \begin{abstract}
 We propose \textbf{behavioral-fingerprint deduplication} for FunSearch, an LLM-driven
@@ -76,11 +77,11 @@ We report three results, all under a $150$-sample budget. \textbf{(Main)} A thre
 a disabled cosine layer), inspired by ReEvo's F-value deduplication
 \citep{ye2024reevo} but lifted to the behaviour level; on OR3 under a $150$-sample
 budget it reduces \emph{samples-to-best} by $38\%$ without degrading best score.
-\textbf{(Extension)} We integrate diversity-guided sampling and ReEvo reflective
-evolution on top of deduplication inside the same pipeline and analyse their
-stacked behaviour; reflection-only is not separately ablated (\S\ref{sec:lim}~\#4),
-and the complete $\mathrm{Score}(c)=\mathrm{Perf}(c)+\beta\cdot\mathrm{Div}(c)$
-cluster scoring is future work. \textbf{(Tool)} We introduce an offline \textbf{Behavioural Coverage Rate} (BCR)
+\textbf{(Extension)} We integrate diversity-guided cluster sampling
+($\mathrm{Score}(c)=\mathrm{Perf}(c)+\beta\cdot\mathrm{Div}(c)$, \S\ref{sec:div})
+and ReEvo reflective evolution on top of deduplication inside the same pipeline
+and analyse their stacked behaviour; reflection-only is not separately ablated
+(\S\ref{sec:lim}~\#4). \textbf{(Tool)} We introduce an offline \textbf{Behavioural Coverage Rate} (BCR)
 metric inspired by MAP-Elites \citep{mouret2015illuminating}; on an exploratory
 pair of runs ($n{=}1$ per condition) it suggests that deduplication alone may
 reach full behavioural coverage faster than deduplication combined with
@@ -384,10 +385,10 @@ confirming it requires multi-seed replication.
 Level~2 is disabled; Hamming/edit-distance or learned metrics are needed.
 
 \textbf{Reflection-plus-stack consistent with landscape smoothing.} The full-stack
-condition's low mean ($-209.66$) and variance ($0.59$), with the late-breakthrough
-pattern (Appendix~\ref{app:reevo-figure}), are qualitatively consistent with
-\citet{ye2024reevo}'s landscape-smoothing mechanism; reflection cannot be
-isolated here as it runs with dedup and diversity active.
+condition's highest mean ($-209.66$) and lowest variance ($0.59$), with the
+late-breakthrough pattern (Appendix~\ref{app:reevo-figure}), are qualitatively
+consistent with \citet{ye2024reevo}'s landscape-smoothing mechanism; reflection
+cannot be isolated here as it runs with dedup and diversity active.
 
 \section{Related Work}
 \label{sec:related}
