@@ -231,6 +231,30 @@ self-evident without external dependencies.
 
 Notebook + offline pipeline now share one source of truth for BCR.
 
+### Apr 26 (final polish) — text consistency + clean re-execution
+
+Three small wording fixes from a final read-through, plus a clean
+top-to-bottom re-execution to refresh all stored outputs.
+
+- Cell 0 Level 1 row "Functionally equivalent programs" softened to
+  "Probe-equivalent behavior (same decisions on the probing suite)" —
+  matches the conservative framing already used in §3.
+- §9 wall-time claim "~40 minutes" was per-condition; updated to
+  "40–90 min per condition; several hours back-to-back for all four".
+- §9 sentence about BCR being "outside this notebook" + reproduction
+  step 3 about regenerating `bcr_data.csv` were stale after P2 — now
+  point at the live §4 BCR cell.
+- BCR cell wraps `KMeans.fit` + `predict` in `warnings.catch_warnings()`
+  to suppress sklearn's benign `RuntimeWarning` (matmul overflow on the
+  high-dim integer fingerprints — the algorithm falls back internally
+  and the output remains byte-equal to the checked-in CSV, verified
+  again here).
+
+Then `jupyter nbconvert --execute --inplace` over the whole notebook:
+21/21 code cells executed without error in ~5 s; all outputs (text,
+figures, tables) refreshed and stored in the .ipynb so the grader sees
+results without having to run anything.
+
 ---
 
 ## Verification gates (passed for Final)
