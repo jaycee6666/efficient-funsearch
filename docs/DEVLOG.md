@@ -178,6 +178,42 @@ verification gates. All dates are 2026. For the design rationale see
   100%, 30.8%, "further extends"), fixed a NaN display, and re-ran all
   cells. Commit dd71f40.
 
+### Apr 26 — Pre-submission notebook review (P0 + P1 fixes)
+
+Final pre-submission audit of `notebooks/efficient_funsearch_colab.ipynb`
+against `background/Project_report_submit.md` requirements.
+
+**P0 (correctness / Colab-runtime safety)**
+
+1. Section 9 `LOG_DIR` nested-path bug — three cells set
+   `LOG_DIR="funsearch-baseline/logs/..."` then `cd funsearch-baseline &&
+   python ...`, which would write logs to
+   `funsearch-baseline/funsearch-baseline/logs/...`. Fixed: `LOG_DIR` now
+   relative to the script's cwd (`logs/...`), with an explanatory comment.
+2. Setup cell missing `scikit-learn` — Section 7 imports
+   `sklearn.manifold.TSNE` but the pip install line did not request it,
+   so a fresh Colab runtime would fail. Added to the install line.
+3. Softened "behaviorally equivalent" / "zero false positives" claims in
+   §3 markdown (cells 11 & 15) to "equivalent on the probing suite
+   (conservative proxy)" — probe-equivalence is a proxy for behavioral
+   equivalence, not a proof.
+
+**P1 (method completeness / report parity)**
+
+4. Inserted a Phase 3 diversity-selection mechanism cell (markdown +
+   demo) between the ablation conclusions and the BCR cell. Shows the
+   `Combined = Perf + β·Div` formula, the linear `β` decay
+   (β_init=0.3, decay_period=350), and a 3-cluster toy where β=0.3
+   shifts ~95 % of the selection mass to the most novel cluster.
+5. Added a 4-condition mean ± std convergence figure (the report's main
+   figure) in §8 just before the summary table, so the figure and Table 1
+   come from identical raw inputs (same `_best_so_far` reduction, same
+   condition→seed mapping).
+
+Both new code cells executed cleanly against the checked-in logs; new
+4-condition figure visually matches `docs/figures/convergence_150.pdf`.
+Total notebook size: 32 → 36 cells.
+
 ---
 
 ## Verification gates (passed for Final)
