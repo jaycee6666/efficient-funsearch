@@ -17,7 +17,7 @@ Usage:
     --output docs/figures/bcr_curves.pdf
 
 Notes:
-  - fingerprints.csv format: sample_num,v1,v2,...,v62  (comma-separated integers)
+  - fingerprints.csv format: sample_num,v1,v2,...,v375  (comma-separated integers)
   - Only dedup/dedup+div runs produce fingerprints (baseline has no dedup_filter).
   - Run with EXPORT_FINGERPRINTS=1 to generate fingerprints.csv during experiments.
 """

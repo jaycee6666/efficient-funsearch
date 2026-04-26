@@ -129,8 +129,8 @@ LOG_DIR=logs/rerun_baseline python funsearch_bin_packing_llm_api.py
 DEDUP_ENABLED=1 LOG_DIR=logs/rerun_dedup python funsearch_bin_packing_llm_api.py
 # dedup + diversity:
 DEDUP_ENABLED=1 DIVERSITY_ENABLED=1 LOG_DIR=logs/rerun_ddiv python funsearch_bin_packing_llm_api.py
-# dedup + ReEvo:
-DEDUP_ENABLED=1 REEVO_ENABLED=1 LOG_DIR=logs/rerun_reevo python funsearch_bin_packing_llm_api.py
+# dedup + diversity + ReEvo (full stack; matches the paper's "reevo" condition):
+DEDUP_ENABLED=1 DIVERSITY_ENABLED=1 REEVO_ENABLED=1 LOG_DIR=logs/rerun_reevo python funsearch_bin_packing_llm_api.py
 
 # Aggregate:
 cd .. && python scripts/collect_results.py
