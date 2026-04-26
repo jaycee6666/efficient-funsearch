@@ -1,11 +1,15 @@
 # Efficient FunSearch
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jaycee6666/efficient-funsearch/blob/main/notebooks/efficient_funsearch_colab.ipynb)
+
 Sample-efficient FunSearch for online bin packing, combining **behavioral deduplication**,
 **diversity-guided selection**, and **reflective evolution (ReEvo)**.
 
 This is the CS5491 Final submission repository. The compiled paper is at
 [`docs/report/main.pdf`](docs/report/main.pdf); the reproducible end-to-end notebook is at
-[`notebooks/efficient_funsearch_colab.ipynb`](notebooks/efficient_funsearch_colab.ipynb).
+[`notebooks/efficient_funsearch_colab.ipynb`](notebooks/efficient_funsearch_colab.ipynb)
+(click the badge above to open it in Colab — every figure and table in the paper is
+regenerated end-to-end from the checked-in CSV logs, no API key required).
 
 ## Overview
 
@@ -116,6 +120,10 @@ in Colab, run all cells; sections §6 (ReEvo), §7 (t-SNE), §8 (summary table) 
 paper exactly.
 
 ### Option B — Re-run the LLM loop locally
+
+> Each condition (150 samples on `gpt-5-nano`) takes roughly **40–90 min** of wall time
+> and consumes course API quota; running all four back-to-back is **several hours**.
+> Skip this if you only need to inspect the pre-recorded results — Option A is enough.
 
 ```bash
 conda activate funsearch   # Python 3.10
