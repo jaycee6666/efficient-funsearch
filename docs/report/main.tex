@@ -189,10 +189,14 @@ clusters via softmax over a \emph{combined} score
 \[
 \mathrm{Score}(c) \;=\; \widehat{\mathrm{Perf}}(c) \;+\; \beta\cdot\widehat{\mathrm{Div}}(c),
 \]
-where $\widehat{\mathrm{Perf}}$ and $\widehat{\mathrm{Div}}$ are the cluster's
-score and diversity term, each min-max normalised across the island's clusters.
-$\mathrm{Div}(c)$ is the row-centred cosine distance between $c$'s representative
-$375$-dim fingerprint and the per-island fingerprint mean. The exploration weight
+with both terms min-max normalised across the island's clusters and
+$\mathrm{Div}(c) = 1 - \overline{\cos}(\tilde{\mathbf{s}}_c, \tilde{\mathbf{s}}_{c'})_{c'\ne c}$
+the row-centred mean cosine distance from $c$ to the other clusters; here
+$\mathbf{s}_c \in \mathbb{R}^{|\mathcal{D}|}$ ($|\mathcal{D}|{=}20$) is the per-OR3-file
+score signature already used as the archive's bucket key (so $\mathrm{Div}$ is
+defined on score patterns, not on the $375$-dim probing fingerprint). Row-centring
+decouples it from absolute level, which $\widehat{\mathrm{Perf}}$ already captures.
+The exploration weight
 $\beta$ decays linearly from $\beta_0{=}0.3$ to $0$ over the first $350$ accepted
 programs, so early sampling prefers behaviourally under-represented clusters and
 late sampling reverts to pure performance-driven exploitation. This is the
@@ -250,7 +254,8 @@ conditions: \textit{baseline} (unmodified FunSearch, $n{=}2$), \textit{dedup}
 (fingerprint funnel only, $n{=}4$), \textit{dedup+div} (funnel plus
 diversity-guided sampling, $n{=}4$), and \textit{reevo} (funnel + diversity-guided sampling + ReEvo
 reflection stacked, $n{=}4$; reflection-only is not separately ablated---see
-\S\ref{sec:lim}~\#4). Total API usage across all runs is $\sim 2{,}100$ calls.
+\S\ref{sec:lim}~\#4). Across all runs the proposer issues $\sim 2{,}100$ samples;
+the four \emph{reevo} runs add up to one reflection call per accepted program.
 
 \subsection{Main Results}
 \label{sec:results}
@@ -260,7 +265,7 @@ reflection stacked, $n{=}4$; reflection-only is not separately ablated---see
 \includegraphics[width=0.65\linewidth]{convergence_150.pdf}
 \caption{Best-score convergence versus sample number across the four conditions
 (mean $\pm$ std band, $n{=}2$--$4$). All conditions land within $-210\pm 1$; the
-ReEvo condition is the only one whose mean is below $-210$.}
+ReEvo condition is the only one whose mean is above $-210$.}
 \label{fig:conv}
 \end{figure}
 
@@ -297,7 +302,7 @@ measurable best-score cost from deduplication, diversity-guided sampling, or ref
 verification of) a low false-positive rate on the full input distribution.
 
 \textbf{(O3) Full stack yields the lowest variance.} The \textit{reevo} condition
-(dedup $+$ diversity $+$ reflection) is the only one whose mean is below $-210$
+(dedup $+$ diversity $+$ reflection) is the only one whose mean is above $-210$
 ($-209.66 \pm 0.59$). This is qualitatively consistent with the landscape-smoothing
 effect reported for reflection by \citet{ye2024reevo}, but because reflection is
 stacked on top of dedup and diversity-guided sampling in these runs, we cannot
@@ -330,7 +335,7 @@ export fingerprints in the current run set.}
 Figure~\ref{fig:bcr} plots BCR$(t)$ for the two fingerprint-exporting conditions
 ($n{=}1$ each; this is exploratory rather than a mechanism claim):
 Dedup-only reaches $\mathrm{BCR}=1.0$ at sample $51$, whereas Dedup+Div takes until
-sample $65$. \textbf{Reverse-intuitive observation:} under this single pair of runs,
+sample $65$. \textbf{Counterintuitively,} under this single pair of runs,
 diversity-guided sampling appears to \emph{slow} cluster visitation. A plausible
 reading is that once duplicates are filtered, retained samples are already diverse
 by construction, so the extra diversity constraint concentrates exploration within
@@ -375,16 +380,14 @@ can substitute for rewarding novelty directly \citep{lehman2011novelty};
 confirming it requires multi-seed replication.
 
 \textbf{Cosine on discrete decision vectors is degenerate.} Calibration
-(\S\ref{sec:fp}) shows $98.5\%$ of genuinely different fingerprint pairs at
-cosine $>0.98$, so Level~2 is disabled; Hamming/edit-distance or learned
-metrics are prerequisites for any high-dimensional behavioural similarity filter.
+(\S\ref{sec:fp}) shows $98.5\%$ of distinct-pair similarities $>0.98$, so
+Level~2 is disabled; Hamming/edit-distance or learned metrics are needed.
 
 \textbf{Reflection-plus-stack consistent with landscape smoothing.} The full-stack
-condition's low mean ($-209.66$) and low variance ($0.59$), together with the
-late-breakthrough pattern (\S\ref{sec:results}, Appendix~\ref{app:reevo-figure}), are qualitatively
-consistent with \citet{ye2024reevo}'s landscape-smoothing mechanism. Because
-reflection runs with dedup and diversity both active, we cannot isolate its
-contribution here; $n{=}4$ further precludes a causal claim.
+condition's low mean ($-209.66$) and variance ($0.59$), with the late-breakthrough
+pattern (Appendix~\ref{app:reevo-figure}), are qualitatively consistent with
+\citet{ye2024reevo}'s landscape-smoothing mechanism; reflection cannot be
+isolated here as it runs with dedup and diversity active.
 
 \section{Related Work}
 \label{sec:related}
@@ -398,37 +401,31 @@ combinatorial heuristics. We retain FunSearch's minimalist loop and target the
 proposer's sample efficiency at the behaviour level.
 
 \textbf{Reflection and behaviour-driven search.} ReEvo \citep{ye2024reevo}
-introduces LLM reflection between generations; we integrate it inside the FunSearch
-loop. Novelty Search \citep{lehman2011novelty} and MAP-Elites
-\citep{mouret2015illuminating} established behavioural-coverage metrics; BCR is
-inspired by MAP-Elites but measures cluster visitation over time. Van
-Stein et al.~\citep{vanstein2025llm} advocate behaviour-space analysis for
-LLM-driven meta-heuristics via runtime trajectories; our fingerprint uses probe
-decisions as a different behavioural proxy, sitting between syntactic AST-hash
-dedup and undecidable semantic equivalence.
+introduces LLM reflection between generations; we integrate it inside the
+FunSearch loop. BCR is inspired by MAP-Elites
+\citep{mouret2015illuminating}/Novelty Search \citep{lehman2011novelty} but
+measures cluster visitation over time; van Stein et al.~\citep{vanstein2025llm}
+advocate runtime-trajectory behaviour-space analysis. Our probe-decision
+fingerprint sits between syntactic AST-hash dedup and undecidable semantic
+equivalence.
 
 \section{Limitations}
 \label{sec:lim}
 
-\textbf{(1) Statistical power:} $n{=}2$--$4$ for the main table and $n{=}1$
-for BCR/t-SNE; results are exploratory rather than significance-tested.
-\textbf{(2) Probe generalisation:} fingerprint equivalence is not verified
-end-to-end on full OR3 (O2 is indirect evidence). \textbf{(3) Single
-$\mathrm{Div}$ metric:} only row-centred cosine; edit distance, learned
-embeddings, and per-program filter-level rejection are future work.
-\textbf{(4) Reflection-only not ablated:} \textit{reevo} stacks reflection on
-dedup and diversity-guided sampling; a reflection-only run is needed to isolate
-it. \textbf{(5) Sandbox bypass:} probes use \texttt{exec()} with $5$\,s timeout
-rather than the forked sandbox.
+\textbf{(1) Statistical power:} $n{=}2$--$4$ (main table), $n{=}1$ (BCR/t-SNE);
+exploratory, not significance-tested. \textbf{(2) Probe generalisation:}
+fingerprint equivalence is not verified end-to-end on full OR3. \textbf{(3)
+Single $\mathrm{Div}$ metric:} row-centred cosine only; edit distance, learned
+embeddings, and per-program filter-level rejection are future work. \textbf{(4)
+Reflection not isolated and probes use \texttt{exec()} (5\,s timeout) rather
+than the forked sandbox.}
 
 \section{Conclusion}
 \label{sec:conc}
 
-Behavioural-fingerprint deduplication cuts FunSearch's samples-to-best by $38\%$
-on OR3 without degrading best score. Exploratory BCR ($n{=}1$) suggests
-diversity-guided sampling may slow cluster coverage; full-stack ReEvo gives the
-lowest-variance condition ($n{=}4$). Future work: richer $\mathrm{Div}$ metrics,
-reflection-only ablation, larger sample budgets.
+Behavioural-fingerprint dedup cuts samples-to-best by $38\%$ on OR3 with no
+best-score loss; exploratory BCR ($n{=}1$) suggests diversity-guided sampling
+slows cluster coverage; full-stack ReEvo gives the lowest variance ($n{=}4$).
 
 \bibliography{final}
 \bibliographystyle{iclr2024_conference}
@@ -439,17 +436,22 @@ reflection-only ablation, larger sample budgets.
 \label{app:repro}
 
 All results are logged from runs conducted between 2026-04-15 and 2026-04-21 on
-the course-provided \texttt{gpt-5-nano} endpoint. Per-condition run seeds, log
-files, and the aggregation script are included in the released repository; the
-reported means and standard deviations are reproduced exactly by
-\texttt{scripts/collect\_results.py}.
+the course-provided \texttt{gpt-5-nano} endpoint. Per-condition raw run logs
+(\texttt{funsearch-baseline/logs/layer*/run\_log.csv}) and the aggregation
+script \texttt{scripts/collect\_results.py} are included in the released
+repository; the reported means and standard deviations are reproduced exactly
+by that script. (The LLM API is non-deterministic, so we do not claim
+seed-level reproducibility of fresh runs; the released CSV logs are the
+authoritative artefact.)
 
-\textbf{API robustness.} The LLM wrapper uses a $60$\,s socket timeout and at
-most $5$ exponential-backoff retries, configurable via \texttt{API\_TIMEOUT}
-and \texttt{API\_MAX\_RETRIES} environment variables. This bound was added on
-2026-04-21 to cap wall-clock on re-runs; it does not affect the logged
-$150$-sample results, which completed under a previous, unbounded retry
-configuration. The Colab notebook linked in the abstract regenerates every
+\textbf{API robustness.} The proposer LLM wrapper uses a $60$\,s socket
+timeout and at most $5$ exponential-backoff retries, configurable via
+\texttt{API\_TIMEOUT} and \texttt{API\_MAX\_RETRIES}. The ReEvo reflection
+helper is a separate code path with a fixed $30$\,s timeout and no retry
+loop; reflection failures are non-fatal (the run continues without storing
+that reflection). The proposer bound was added on 2026-04-21 to cap
+wall-clock on re-runs; it does not affect the logged $150$-sample results,
+which completed under a previous, unbounded retry configuration. The Colab notebook linked in the abstract regenerates every
 table and figure from the raw CSV logs without rerunning the LLM loop.
 
 \section{Probing Instances}
